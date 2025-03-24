@@ -1,13 +1,8 @@
 /* styles.css */
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap');
-
 body {
-    font-family: 'Dancing Script', cursive;
-    background-color: red;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+    font-family: Dancing Script, cursive;
+    background-image: url("https://images.pexels.com/photos/674010/pexels-photo-674010.jpeg?cs=srgb&dl=pexels-anjana-c-169994-674010.jpg&fm=jpg);
     margin: 0;
     padding: 0;
 }

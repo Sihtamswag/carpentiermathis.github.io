@@ -1,8 +1,19 @@
 /* styles.css */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap');
+
 body {
+<<<<<<< HEAD
     font-family: Dancing Script, cursive;
     background-color: #f4f4f4;
     background-image: url('Images/white\ with\ gray\ stroke\ brush\ background.avif');
+=======
+    font-family: 'Dancing Script', cursive;
+    background-image: url("https://images.pexels.com/photos/674010/pexels-photo-674010.jpeg");
+    background-size: cover; /* Ajuste l’image à la taille de l’écran */
+    background-position: center; /* Centre l’image */
+    background-repeat: no-repeat; /* Empêche la répétition */
+    background-attachment: fixed; /* Garde l’image fixe en scrollant */
+>>>>>>> 9d0b30a2ab7f2c7b1cf21e70c3f41b58faac82a0
     margin: 0;
     padding: 0;
 }

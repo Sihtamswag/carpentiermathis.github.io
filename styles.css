@@ -42,8 +42,8 @@ section {
     background-color: #fff;
     padding: 15px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    border: 2px solid black; /* ← Le contour noir */
+    box-shadow: 0 20px 5px rgba(0, 0, 0, 0.1);
+    border: 20px solid black; /* ← Le contour noir */
     width: fit-content;
 }
 

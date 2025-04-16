@@ -53,7 +53,7 @@ footer {
     color: #fff;
     text-align: center; /* tous les text sont centrer horizontalement. */
     padding: 10px;
-    position: relative;
+    position: fixed;
     width: 100%;
     bottom: 0;
 }

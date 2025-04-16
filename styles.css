@@ -51,6 +51,7 @@ section {
     background-size: 150px;
     background-position: right top;
     margin-top: 20px;
+    background-repeat: no-repeat;
 }
 
 footer {

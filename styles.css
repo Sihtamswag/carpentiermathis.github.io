@@ -50,7 +50,7 @@ section {
     background-image: url("Images/white\ with\ gray\ stroke\ brush\ background.avif");
     background-size: 150px;
     background-position: right top;
-    margin-top: 20px;
+    background-position: right 20px top 20px;
     background-repeat: no-repeat;
 }
 

@@ -51,9 +51,9 @@ section {
 footer {
     background-color: #333;
     color: #fff;
-    text-align: center;
+    text-align: center; /* tous les text sont centrer horizontalement. */
     padding: 10px;
-    position: absolute;
+    position: relative;
     width: 100%;
     bottom: 0;
 }

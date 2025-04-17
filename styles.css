@@ -47,11 +47,6 @@ section {
     width: 100%;
     max-width: 600px;
 
-    background-image: url("Images/white\ with\ gray\ stroke\ brush\ background.avif");
-    background-size: 150px;
-    background-position: right top;
-    background-position: right 20px top 20px;
-    background-repeat: no-repeat;
 }
 
 footer {

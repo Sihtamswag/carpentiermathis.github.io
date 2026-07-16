@@ -1,0 +1,312 @@
+/* agents-system/style.css — isolated app, no dependency on the portfolio's styles.css */
+
+:root {
+    --bg: #0f1420;
+    --bg-elevated: #161d2e;
+    --border: #2a3348;
+    --text: #e7ebf3;
+    --text-dim: #9aa5b8;
+    --accent: #4fd1c5;
+    --accent-dim: #2b7a72;
+    --error: #ff6b6b;
+    --error-bg: #3a1f22;
+    --ok: #4fd1c5;
+    --warn: #f0b429;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background-color: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+}
+
+.hdr {
+    padding: 40px 20px 24px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.hdr h1 {
+    margin: 0 0 10px;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.hdr-sub {
+    margin: 0 auto;
+    max-width: 640px;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+}
+
+.wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 24px 20px 80px;
+}
+
+.notice {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 0.88rem;
+    color: var(--text-dim);
+}
+
+.notice a {
+    color: var(--accent);
+}
+
+.config-card {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px;
+    margin-bottom: 24px;
+}
+
+.config-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.config-card label {
+    font-weight: 600;
+    font-size: 0.88rem;
+    margin-top: 12px;
+    color: var(--text);
+}
+
+.config-card input[type="text"],
+.config-card input[type="password"],
+.config-card select,
+.config-card textarea {
+    font-family: inherit;
+    font-size: 0.92rem;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background-color: var(--bg);
+    color: var(--text);
+    resize: vertical;
+}
+
+.config-card input:focus,
+.config-card select:focus,
+.config-card textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 400 !important;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+
+.actions-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+#run-btn {
+    flex: 1;
+    padding: 12px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background-color: var(--accent);
+    color: #08201d;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#run-btn:disabled {
+    background-color: var(--accent-dim);
+    color: #0008;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    padding: 12px 16px;
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 0.88rem;
+    background-color: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-secondary:disabled {
+    color: var(--text-dim);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.btn-secondary:not(:disabled):hover,
+#run-btn:not(:disabled):hover {
+    filter: brightness(1.1);
+}
+
+.global-status {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+.global-status.info {
+    background-color: #16253a;
+    border: 1px solid #2f5c86;
+}
+
+.global-status.error {
+    background-color: var(--error-bg);
+    border: 1px solid var(--error);
+    color: var(--error);
+}
+
+.pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.agent-card {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    position: relative;
+}
+
+.agent-card::before {
+    content: '';
+    position: absolute;
+    left: 38px;
+    top: -16px;
+    width: 1px;
+    height: 16px;
+    background-color: var(--border);
+}
+
+.agent-card:first-child::before {
+    display: none;
+}
+
+.agent-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.agent-emoji {
+    font-size: 1.4rem;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.agent-card-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.agent-subtitle {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.agent-status {
+    margin-left: auto;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.agent-status.running {
+    color: var(--warn);
+    border-color: var(--warn);
+}
+
+.agent-status.done {
+    color: var(--ok);
+    border-color: var(--ok);
+}
+
+.agent-status.error {
+    color: var(--error);
+    border-color: var(--error);
+}
+
+.agent-output {
+    margin-top: 14px;
+    font-size: 0.9rem;
+}
+
+.agent-output p {
+    margin: 0 0 10px;
+}
+
+.agent-output h4 {
+    margin: 14px 0 6px;
+    font-size: 0.95rem;
+}
+
+.agent-output ul {
+    margin: 0 0 10px;
+    padding-left: 20px;
+}
+
+.agent-placeholder {
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+.agent-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.report-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.ftr {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+}

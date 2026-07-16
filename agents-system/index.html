@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système Multi-Agents Business</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="hdr">
+        <h1>Système Multi-Agents Business</h1>
+        <p class="hdr-sub">Un pipeline de 5 agents IA — Researcher → CMO → Sales Rep → Developer → Data Analyst — qui traitent ton contexte business en cascade, chacun s'appuyant sur la sortie du précédent.</p>
+    </header>
+
+    <main class="wrap">
+
+        <section class="notice">
+            <strong>Comment ça marche :</strong> cette application appelle directement l'API OpenAI depuis ton navigateur.
+            Il te faut ta propre clé API (avec accès facturation actif sur
+            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>).
+            Ta clé n'est jamais envoyée ailleurs qu'à OpenAI et n'est pas sauvegardée sur GitHub. Cette page est isolée du reste du portfolio.
+        </section>
+
+        <section class="config-card">
+            <form id="config-form">
+                <label for="api-key">Clé API OpenAI</label>
+                <input type="password" id="api-key" placeholder="sk-..." autocomplete="off" required>
+                <label class="checkbox-row">
+                    <input type="checkbox" id="remember-key">
+                    Me souvenir de ma clé sur cet appareil
+                </label>
+
+                <label for="model-input">Modèle</label>
+                <select id="model-input">
+                    <option value="gpt-4o-mini">gpt-4o-mini (rapide, économique)</option>
+                    <option value="gpt-4o">gpt-4o (plus qualitatif)</option>
+                </select>
+
+                <label for="context-input">Contexte business</label>
+                <textarea id="context-input" rows="6" placeholder="Décris ton business : produit/service, marché cible, objectif actuel, ce que tu cherches à accomplir avec ce pipeline..." required></textarea>
+
+                <div class="actions-row">
+                    <button type="submit" id="run-btn">Lancer le pipeline</button>
+                    <button type="button" id="reset-btn" class="btn-secondary">Réinitialiser</button>
+                </div>
+            </form>
+        </section>
+
+        <div id="global-status" class="global-status" hidden></div>
+
+        <section id="pipeline" class="pipeline"></section>
+
+        <section id="report-actions" class="report-actions" hidden>
+            <button id="copy-report-btn" class="btn-secondary">Copier le rapport complet</button>
+            <button id="download-report-btn" class="btn-secondary">Télécharger le rapport (.md)</button>
+        </section>
+
+    </main>
+
+    <footer class="ftr">
+        <p>Application isolée — non liée au reste du portfolio.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

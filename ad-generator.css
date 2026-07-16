@@ -1,0 +1,129 @@
+/* ad-generator.css */
+
+#ad-generator {
+    max-width: 650px;
+    margin: 20px auto 80px;
+    padding-bottom: 40px;
+}
+
+.ad-intro {
+    font-size: 1.1rem;
+}
+
+.ad-notice {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-family: Arial, sans-serif;
+    font-size: 0.9rem;
+}
+
+.ad-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background-color: #fff;
+    border: 1px solid black;
+    border-radius: 6px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.ad-form label {
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.ad-form input[type="text"],
+.ad-form input[type="password"],
+.ad-form input[type="file"],
+.ad-form select {
+    font-family: Arial, sans-serif;
+    padding: 8px;
+    border: 1px solid #999;
+    border-radius: 4px;
+}
+
+.ad-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal !important;
+}
+
+.ad-preview {
+    max-width: 200px;
+    max-height: 200px;
+    margin-top: 8px;
+    border: 1px solid #999;
+    border-radius: 4px;
+}
+
+#generate-btn {
+    margin-top: 20px;
+    padding: 12px;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    font-size: 1rem;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#generate-btn:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+}
+
+.ad-status {
+    font-family: Arial, sans-serif;
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.ad-status.info {
+    background-color: #e3f2fd;
+    border: 1px solid #90caf9;
+}
+
+.ad-status.error {
+    background-color: #fdecea;
+    border: 1px solid #f5c6cb;
+    color: #611a15;
+}
+
+.ad-result {
+    margin-top: 24px;
+    background-color: #fff;
+    border: 1px solid black;
+    border-radius: 6px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.ad-result img {
+    width: 100%;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.ad-tagline {
+    font-family: Arial, sans-serif;
+}
+
+.ad-download {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 10px 16px;
+    background-color: #333;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+}

@@ -1,0 +1,93 @@
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Pub IA</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="ad-generator.css">
+</head>
+
+<body>
+
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="about.html">Qui suis je</a></li>
+                <li><a href="projects.html">Projets</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="connaissance.html">Connaissances</a></li>
+                <li><a href="ad-generator.html">Générateur de Pub IA</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="ad-generator">
+        <h2>Générateur de Publicité IA</h2>
+        <p class="ad-intro">
+            Envoie une image et un thème, l'IA génère une visuelle publicitaire ainsi qu'un slogan.
+        </p>
+
+        <div class="ad-notice">
+            <strong>Comment ça marche :</strong> cet outil appelle directement l'API d'OpenAI depuis ton navigateur.
+            Il te faut ta propre clé API OpenAI (avec accès facturation actif sur
+            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>).
+            Ta clé n'est jamais envoyée ailleurs qu'à OpenAI et n'est pas sauvegardée sur GitHub.
+        </div>
+
+        <form id="ad-form" class="ad-form">
+            <label for="api-key">Clé API OpenAI</label>
+            <input type="password" id="api-key" placeholder="sk-..." autocomplete="off" required>
+            <label class="ad-checkbox">
+                <input type="checkbox" id="remember-key">
+                Me souvenir de ma clé sur cet appareil
+            </label>
+
+            <label for="image-input">Image de référence (produit, photo, logo...)</label>
+            <input type="file" id="image-input" accept="image/png, image/jpeg, image/webp" required>
+            <img id="image-preview" class="ad-preview" alt="Aperçu de l'image" hidden>
+
+            <label for="theme-input">Thème de la publicité</label>
+            <input type="text" id="theme-input" placeholder="ex: Noël, promotion d'été, luxe, rentrée scolaire..." required>
+
+            <label for="brand-input">Nom du produit / marque (optionnel)</label>
+            <input type="text" id="brand-input" placeholder="ex: Atelier Carpentier">
+
+            <label for="tone-input">Ton du visuel</label>
+            <select id="tone-input">
+                <option value="professionnel et épuré">Professionnel et épuré</option>
+                <option value="fun et coloré">Fun et coloré</option>
+                <option value="luxueux et élégant">Luxueux et élégant</option>
+                <option value="urgent, promo, grosses soldes">Urgent / promo</option>
+                <option value="minimaliste">Minimaliste</option>
+            </select>
+
+            <label for="format-input">Format</label>
+            <select id="format-input">
+                <option value="1024x1024">Carré (1024x1024 — post Instagram)</option>
+                <option value="1024x1536">Portrait (1024x1536 — story)</option>
+                <option value="1536x1024">Paysage (1536x1024 — bannière)</option>
+            </select>
+
+            <button type="submit" id="generate-btn">Générer la publicité</button>
+        </form>
+
+        <div id="ad-status" class="ad-status" hidden></div>
+
+        <div id="ad-result" class="ad-result" hidden>
+            <img id="result-image" alt="Publicité générée">
+            <div class="ad-tagline">
+                <h3>Slogan proposé</h3>
+                <p id="result-tagline"></p>
+            </div>
+            <a id="download-link" class="ad-download" download="publicite.png">Télécharger l'image</a>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2025 Mathis Carpentier. CopyRight.</p>
+    </footer>
+
+    <script src="ad-generator.js"></script>
+</body>
+</html>

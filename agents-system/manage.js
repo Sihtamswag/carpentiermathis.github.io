@@ -7,6 +7,7 @@ const LEADS_KEY = 'agents-system-leads';
 const TASKS_KEY = 'agents-system-tasks';
 const CONTENT_KEY = 'agents-system-content';
 const METRICS_KEY = 'agents-system-metrics';
+const SCHEDULE_KEY = 'agents-system-schedule';
 
 const LEAD_STATUS_LABELS = {
     nouveau: 'Nouveau',
@@ -212,31 +213,55 @@ function getLeadsSummary() {
     ).join('\n');
 }
 
-// ===================== TASKS =====================
+// ===================== TASKS (KANBAN) =====================
 
-let tasks = loadArray(TASKS_KEY);
+const KANBAN_COLUMNS = ['pending', 'in_progress', 'done'];
+const KANBAN_LABELS = { pending: 'À faire', in_progress: 'En cours', done: 'Terminé' };
+const PRIORITY_LABELS = { haute: 'Haute', moyenne: 'Moyenne', basse: 'Basse' };
+
+let tasks = loadArray(TASKS_KEY).map((task) => {
+    // migrate legacy {done: boolean} tasks to the column model
+    if (!task.column) {
+        task.column = task.done ? 'done' : 'pending';
+        delete task.done;
+    }
+    if (!task.priority) task.priority = 'moyenne';
+    return task;
+});
+saveArray(TASKS_KEY, tasks);
 
 const taskForm = document.getElementById('task-form');
 const taskInput = document.getElementById('task-input');
-const taskList = document.getElementById('task-list');
+const taskPriority = document.getElementById('task-priority');
 
 taskForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const text = taskInput.value.trim();
     if (!text) return;
-    addTask(text, 'manuel');
+    addTask(text, 'manuel', taskPriority.value);
     taskInput.value = '';
 });
 
-function addTask(text, source) {
-    tasks.push({ id: uid(), text, source: source || 'manuel', done: false, createdAt: Date.now() });
+function addTask(text, source, priority) {
+    tasks.push({
+        id: uid(),
+        text,
+        source: source || 'manuel',
+        priority: priority || 'moyenne',
+        column: 'pending',
+        createdAt: Date.now()
+    });
     saveArray(TASKS_KEY, tasks);
     renderTasks();
 }
 
-function toggleTask(id) {
+function moveTask(id, direction) {
     const task = tasks.find((t) => t.id === id);
-    if (task) task.done = !task.done;
+    if (!task) return;
+    const index = KANBAN_COLUMNS.indexOf(task.column);
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= KANBAN_COLUMNS.length) return;
+    task.column = KANBAN_COLUMNS[newIndex];
     saveArray(TASKS_KEY, tasks);
     renderTasks();
 }
@@ -248,32 +273,43 @@ function deleteTask(id) {
 }
 
 function renderTasks() {
-    if (!tasks.length) {
-        taskList.innerHTML = '<p class="agent-placeholder">Aucune tâche pour l\'instant.</p>';
-        return;
-    }
-    const sorted = [...tasks].sort((a, b) => {
-        if (a.done !== b.done) return a.done ? 1 : -1;
-        return b.createdAt - a.createdAt;
-    });
-    taskList.innerHTML = sorted.map((task) => `
-        <div class="record-row task-row ${task.done ? 'task-done' : ''}">
-            <label class="task-check">
-                <input type="checkbox" data-task-toggle="${task.id}" ${task.done ? 'checked' : ''}>
-                <span>${escapeHtml(task.text)}</span>
-            </label>
-            <div class="record-actions">
-                <span class="task-source">${escapeHtml(task.source)}</span>
-                <button type="button" class="btn-secondary btn-tiny" data-task-delete="${task.id}">Supprimer</button>
-            </div>
-        </div>
-    `).join('');
+    KANBAN_COLUMNS.forEach((column) => {
+        const columnEl = document.getElementById(`kanban-${column}`);
+        const countEl = document.getElementById(`count-${column}`);
+        const columnTasks = tasks.filter((t) => t.column === column).sort((a, b) => b.createdAt - a.createdAt);
+        countEl.textContent = columnTasks.length;
 
-    taskList.querySelectorAll('[data-task-toggle]').forEach((el) => {
-        el.addEventListener('change', () => toggleTask(el.dataset.taskToggle));
+        if (!columnTasks.length) {
+            columnEl.innerHTML = '<p class="agent-placeholder">Vide</p>';
+            return;
+        }
+
+        columnEl.innerHTML = columnTasks.map((task) => {
+            const index = KANBAN_COLUMNS.indexOf(task.column);
+            return `
+                <div class="kanban-card">
+                    <div class="kanban-card-top">
+                        <span class="badge priority-${task.priority}">${PRIORITY_LABELS[task.priority]}</span>
+                        <button type="button" class="kanban-delete" data-task-delete="${task.id}">×</button>
+                    </div>
+                    <p class="kanban-card-text">${escapeHtml(task.text)}</p>
+                    <div class="kanban-card-bottom">
+                        <span class="task-source">${escapeHtml(task.source)}</span>
+                        <div class="kanban-move">
+                            <button type="button" class="btn-secondary btn-tiny" data-task-move="${task.id}" data-dir="-1" ${index === 0 ? 'disabled' : ''}>◀</button>
+                            <button type="button" class="btn-secondary btn-tiny" data-task-move="${task.id}" data-dir="1" ${index === KANBAN_COLUMNS.length - 1 ? 'disabled' : ''}>▶</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     });
-    taskList.querySelectorAll('[data-task-delete]').forEach((btn) => {
+
+    document.querySelectorAll('[data-task-delete]').forEach((btn) => {
         btn.addEventListener('click', () => deleteTask(btn.dataset.taskDelete));
+    });
+    document.querySelectorAll('[data-task-move]').forEach((btn) => {
+        btn.addEventListener('click', () => moveTask(btn.dataset.taskMove, Number(btn.dataset.dir)));
     });
 }
 
@@ -620,13 +656,114 @@ function getMetricsSummary() {
     ).join('\n');
 }
 
+// ===================== SCHEDULE (recurring reminders) =====================
+// No backend: nothing runs automatically in the background. This is a manual
+// checklist of recurring reminders the user reviews and advances themselves.
+
+const FREQUENCY_DAYS = { quotidien: 1, hebdomadaire: 7 };
+
+let reminders = loadArray(SCHEDULE_KEY);
+
+const scheduleForm = document.getElementById('schedule-form');
+const scheduleLabel = document.getElementById('schedule-label');
+const scheduleFrequency = document.getElementById('schedule-frequency');
+const scheduleNextDate = document.getElementById('schedule-next-date');
+const scheduleNotes = document.getElementById('schedule-notes');
+const scheduleList = document.getElementById('schedule-list');
+
+scheduleNextDate.value = new Date().toISOString().slice(0, 10);
+
+scheduleForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!scheduleLabel.value.trim() || !scheduleNextDate.value) return;
+    reminders.push({
+        id: uid(),
+        label: scheduleLabel.value.trim(),
+        frequency: scheduleFrequency.value,
+        nextDate: scheduleNextDate.value,
+        notes: scheduleNotes.value.trim(),
+        createdAt: Date.now()
+    });
+    saveArray(SCHEDULE_KEY, reminders);
+    scheduleLabel.value = '';
+    scheduleNotes.value = '';
+    scheduleNextDate.value = new Date().toISOString().slice(0, 10);
+    renderSchedule();
+});
+
+function advanceDate(dateStr, frequency) {
+    const date = new Date(`${dateStr}T00:00:00`);
+    if (frequency === 'mensuel') {
+        date.setMonth(date.getMonth() + 1);
+    } else {
+        date.setDate(date.getDate() + (FREQUENCY_DAYS[frequency] || 7));
+    }
+    return date.toISOString().slice(0, 10);
+}
+
+function markReminderDone(id) {
+    const reminder = reminders.find((r) => r.id === id);
+    if (!reminder) return;
+    reminder.lastRun = new Date().toISOString().slice(0, 10);
+    reminder.nextDate = advanceDate(reminder.nextDate, reminder.frequency);
+    saveArray(SCHEDULE_KEY, reminders);
+    renderSchedule();
+}
+
+function deleteReminder(id) {
+    reminders = reminders.filter((r) => r.id !== id);
+    saveArray(SCHEDULE_KEY, reminders);
+    renderSchedule();
+}
+
+function renderSchedule() {
+    if (!reminders.length) {
+        scheduleList.innerHTML = '<p class="agent-placeholder">Aucun rappel programmé.</p>';
+        return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const sorted = [...reminders].sort((a, b) => a.nextDate.localeCompare(b.nextDate));
+    scheduleList.innerHTML = sorted.map((r) => {
+        let dueBadge;
+        if (r.nextDate < today) dueBadge = '<span class="badge due-late">En retard</span>';
+        else if (r.nextDate === today) dueBadge = '<span class="badge due-today">Aujourd\'hui</span>';
+        else dueBadge = `<span class="badge due-upcoming">${r.nextDate}</span>`;
+        return `
+            <div class="record-row">
+                <div class="record-main">
+                    <div class="record-title-row">
+                        <strong>${escapeHtml(r.label)}</strong>
+                        <span class="badge">${r.frequency}</span>
+                        ${dueBadge}
+                    </div>
+                    ${r.notes ? `<p class="record-notes">${escapeHtml(r.notes)}</p>` : ''}
+                    ${r.lastRun ? `<p class="record-sub">Dernière fois : ${r.lastRun}</p>` : ''}
+                </div>
+                <div class="record-actions">
+                    <button type="button" class="btn-secondary btn-tiny" data-reminder-done="${r.id}">Marquer fait</button>
+                    <button type="button" class="btn-secondary btn-tiny" data-reminder-delete="${r.id}">Supprimer</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    scheduleList.querySelectorAll('[data-reminder-done]').forEach((btn) => {
+        btn.addEventListener('click', () => markReminderDone(btn.dataset.reminderDone));
+    });
+    scheduleList.querySelectorAll('[data-reminder-delete]').forEach((btn) => {
+        btn.addEventListener('click', () => deleteReminder(btn.dataset.reminderDelete));
+    });
+}
+
 // ===================== OVERVIEW (for CEO debrief) =====================
 
 function getOverviewSummary() {
-    const openTasks = tasks.filter((t) => !t.done).length;
+    const openTasks = tasks.filter((t) => t.column !== 'done').length;
     const activeLeads = leads.filter((l) => l.status !== 'gagne' && l.status !== 'perdu').length;
     const pendingContent = contentItems.filter((c) => c.status !== 'publie').length;
-    return `État opérationnel actuel : ${openTasks} tâche(s) ouverte(s), ${activeLeads} prospect(s) actif(s) dans le CRM, ${pendingContent} contenu(s) en attente de publication.`;
+    const today = new Date().toISOString().slice(0, 10);
+    const dueReminders = reminders.filter((r) => r.nextDate <= today).length;
+    return `État opérationnel actuel : ${openTasks} tâche(s) ouverte(s), ${activeLeads} prospect(s) actif(s) dans le CRM, ${pendingContent} contenu(s) en attente de publication, ${dueReminders} rappel(s) à traiter.`;
 }
 
 function openLeadForm() {
@@ -652,3 +789,4 @@ renderLeads();
 renderTasks();
 renderContent();
 renderMetrics();
+renderSchedule();

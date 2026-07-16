@@ -1083,3 +1083,115 @@ body {
     white-space: nowrap;
     z-index: 10;
 }
+
+/* --- Command Center status badge --- */
+
+.system-status-badge {
+    color: var(--working);
+    border-color: var(--working);
+    text-transform: none;
+}
+
+/* --- Kanban board --- */
+
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+@media (max-width: 720px) {
+    .kanban-board {
+        grid-template-columns: 1fr;
+    }
+}
+
+.kanban-column {
+    background-color: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    min-width: 0;
+}
+
+.kanban-column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 4px 10px;
+}
+
+.kanban-column-header h3 {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.kanban-count {
+    font-size: 0.65rem;
+}
+
+.kanban-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 40px;
+}
+
+.kanban-card {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 12px;
+}
+
+.kanban-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.kanban-delete {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+}
+
+.kanban-delete:hover {
+    color: var(--error);
+}
+
+.kanban-card-text {
+    margin: 8px 0;
+    font-size: 0.85rem;
+    word-break: break-word;
+}
+
+.kanban-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.kanban-move {
+    display: flex;
+    gap: 4px;
+}
+
+.kanban-move .btn-tiny {
+    padding: 3px 8px;
+}
+
+.priority-haute { color: var(--error); border-color: var(--error); }
+.priority-moyenne { color: var(--warn); border-color: var(--warn); }
+.priority-basse { color: var(--text-dim); border-color: var(--border); }
+
+/* --- Schedule / reminders --- */
+
+.due-late { color: var(--error); border-color: var(--error); }
+.due-today { color: var(--warn); border-color: var(--warn); }
+.due-upcoming { color: var(--text-dim); border-color: var(--border); text-transform: none; }

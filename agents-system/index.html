@@ -25,6 +25,7 @@
         <button type="button" class="tab-btn" data-tab="tasks">Tâches</button>
         <button type="button" class="tab-btn" data-tab="content">Contenu</button>
         <button type="button" class="tab-btn" data-tab="metrics">Métriques</button>
+        <button type="button" class="tab-btn" data-tab="schedule">Planification</button>
     </nav>
 
     <main class="wrap">
@@ -40,8 +41,16 @@
                 contenus et métriques restent aussi uniquement dans ton navigateur. Application isolée du reste du portfolio.
             </section>
 
+            <section class="panel-card">
+                <div class="panel-header">
+                    <h2>Command Center</h2>
+                    <span class="badge system-status-badge">● opérationnel</span>
+                </div>
+                <div class="stat-tiles" id="command-stats"></div>
+            </section>
+
             <section class="config-card">
-                <p class="config-kicker">COMMAND CENTER</p>
+                <p class="config-kicker">CONFIGURATION</p>
                 <form id="config-form">
                     <label for="api-key">Clé API OpenAI</label>
                     <input type="password" id="api-key" placeholder="sk-..." autocomplete="off" required>
@@ -178,7 +187,7 @@
             </section>
         </section>
 
-        <!-- ===================== TASKS TAB ===================== -->
+        <!-- ===================== TASKS TAB (KANBAN) ===================== -->
         <section class="tab-panel" id="tab-tasks">
             <section class="panel-card">
                 <div class="panel-header">
@@ -188,10 +197,78 @@
 
                 <form id="task-form" class="quick-add-row">
                     <input type="text" id="task-input" placeholder="Nouvelle tâche...">
+                    <select id="task-priority">
+                        <option value="basse">Basse</option>
+                        <option value="moyenne" selected>Moyenne</option>
+                        <option value="haute">Haute</option>
+                    </select>
                     <button type="submit" class="btn-secondary">Ajouter</button>
                 </form>
 
-                <div id="task-list" class="record-list"></div>
+                <div class="kanban-board">
+                    <div class="kanban-column">
+                        <div class="kanban-column-header">
+                            <h3>À faire</h3>
+                            <span class="badge kanban-count" id="count-pending">0</span>
+                        </div>
+                        <div class="kanban-list" id="kanban-pending"></div>
+                    </div>
+                    <div class="kanban-column">
+                        <div class="kanban-column-header">
+                            <h3>En cours</h3>
+                            <span class="badge kanban-count" id="count-in_progress">0</span>
+                        </div>
+                        <div class="kanban-list" id="kanban-in_progress"></div>
+                    </div>
+                    <div class="kanban-column">
+                        <div class="kanban-column-header">
+                            <h3>Terminé</h3>
+                            <span class="badge kanban-count" id="count-done">0</span>
+                        </div>
+                        <div class="kanban-list" id="kanban-done"></div>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <!-- ===================== SCHEDULE TAB ===================== -->
+        <section class="tab-panel" id="tab-schedule">
+            <section class="panel-card">
+                <div class="panel-header">
+                    <h2>Nouveau rappel récurrent</h2>
+                </div>
+                <p class="panel-desc">
+                    Liste de rappels que <strong>tu</strong> valides toi-même en ouvrant l'app — sans backend, rien ne
+                    s'exécute automatiquement en arrière-plan, ce n'est pas un vrai cron.
+                </p>
+                <form id="schedule-form" class="inline-form">
+                    <label for="schedule-label">Rappel</label>
+                    <input type="text" id="schedule-label" placeholder="ex: Relancer les prospects en négociation" required>
+
+                    <label for="schedule-frequency">Fréquence</label>
+                    <select id="schedule-frequency">
+                        <option value="quotidien">Quotidien</option>
+                        <option value="hebdomadaire" selected>Hebdomadaire</option>
+                        <option value="mensuel">Mensuel</option>
+                    </select>
+
+                    <label for="schedule-next-date">Prochaine échéance</label>
+                    <input type="date" id="schedule-next-date" required>
+
+                    <label for="schedule-notes">Notes (optionnel)</label>
+                    <input type="text" id="schedule-notes" placeholder="ex: vérifier le CRM avant de relancer">
+
+                    <div class="inline-form-actions">
+                        <button type="submit" class="btn-secondary">Enregistrer le rappel</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="panel-card">
+                <div class="panel-header">
+                    <h2>Rappels programmés</h2>
+                </div>
+                <div id="schedule-list" class="record-list"></div>
             </section>
         </section>
 

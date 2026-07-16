@@ -8,6 +8,8 @@ const KEY_STORAGE = 'agents-system-openai-key';
 const LOG_STORAGE = 'agents-system-log';
 const CALLS_STORAGE = 'agents-system-call-count';
 const REPORTS_STORAGE = 'agents-system-report-count';
+const ERRORS_STORAGE = 'agents-system-error-count';
+const TOKENS_STORAGE = 'agents-system-token-count';
 const LOG_LIMIT = 50;
 
 const CEO = {
@@ -121,6 +123,7 @@ const statReports = document.getElementById('stat-reports');
 const logList = document.getElementById('log-list');
 const logEmpty = document.getElementById('log-empty');
 const clearLogBtn = document.getElementById('clear-log-btn');
+const commandStatsEl = document.getElementById('command-stats');
 
 const outputs = {};
 let ceoKickoff = '';
@@ -135,6 +138,8 @@ if (savedKey) {
 
 let callCount = parseInt(localStorage.getItem(CALLS_STORAGE) || '0', 10);
 let reportCount = parseInt(localStorage.getItem(REPORTS_STORAGE) || '0', 10);
+let errorCount = parseInt(localStorage.getItem(ERRORS_STORAGE) || '0', 10);
+let tokenCount = parseInt(localStorage.getItem(TOKENS_STORAGE) || '0', 10);
 statCalls.textContent = callCount;
 statReports.textContent = reportCount;
 
@@ -142,6 +147,34 @@ try {
     logEntries = JSON.parse(localStorage.getItem(LOG_STORAGE) || '[]');
 } catch (e) {
     logEntries = [];
+}
+
+function recordError() {
+    errorCount += 1;
+    localStorage.setItem(ERRORS_STORAGE, String(errorCount));
+    renderCommandStats();
+}
+
+function renderCommandStats() {
+    const lastActivity = logEntries.length ? relativeTime(logEntries[0].timestamp) : 'jamais';
+    commandStatsEl.innerHTML = `
+        <div class="stat-tile">
+            <span class="stat-tile-label">Appels totaux</span>
+            <span class="stat-tile-value">${callCount.toLocaleString('fr-FR')}</span>
+        </div>
+        <div class="stat-tile">
+            <span class="stat-tile-label">Tokens utilisés</span>
+            <span class="stat-tile-value">${tokenCount.toLocaleString('fr-FR')}</span>
+        </div>
+        <div class="stat-tile">
+            <span class="stat-tile-label">Erreurs</span>
+            <span class="stat-tile-value ${errorCount > 0 ? 'delta-down' : ''}">${errorCount}</span>
+        </div>
+        <div class="stat-tile">
+            <span class="stat-tile-label">Dernière activité</span>
+            <span class="stat-tile-value">${lastActivity}</span>
+        </div>
+    `;
 }
 
 function buildPipelineDom() {
@@ -394,6 +427,12 @@ async function callModel(apiKey, model, systemPrompt, userMessage) {
     localStorage.setItem(CALLS_STORAGE, String(callCount));
     statCalls.textContent = callCount;
 
+    if (data.usage?.total_tokens) {
+        tokenCount += data.usage.total_tokens;
+        localStorage.setItem(TOKENS_STORAGE, String(tokenCount));
+    }
+    renderCommandStats();
+
     return data.choices[0].message.content.trim();
 }
 
@@ -410,6 +449,7 @@ function addLogEntry(agentId, agentName, color, text, model, status) {
     logEntries = logEntries.slice(0, LOG_LIMIT);
     localStorage.setItem(LOG_STORAGE, JSON.stringify(logEntries));
     renderLog();
+    renderCommandStats();
 }
 
 function relativeTime(timestamp) {
@@ -468,6 +508,7 @@ async function runPipeline() {
         setAgentStatus('ceo', 'error', 'error');
         setGlobalStatus(`Erreur sur le CEO : ${error.message}`, 'error');
         addLogEntry('ceo', 'CEO', 'ceo', 'Échec du plan de routage', model, 'FAILED');
+        recordError();
         runBtn.disabled = false;
         return;
     }
@@ -487,6 +528,7 @@ async function runPipeline() {
             setAgentStatus(agent.id, 'error', 'error');
             setGlobalStatus(`Erreur sur l'agent ${agent.name} : ${error.message}`, 'error');
             addLogEntry(agent.id, agent.name, agent.color, 'Échec de génération', model, 'FAILED');
+            recordError();
             setAgentStatus('ceo', 'error', 'error');
             runBtn.disabled = false;
             return;
@@ -504,6 +546,7 @@ async function runPipeline() {
         setAgentStatus('ceo', 'error', 'error');
         setGlobalStatus(`Erreur sur le debrief du CEO : ${error.message}`, 'error');
         addLogEntry('ceo', 'CEO', 'ceo', 'Échec du debrief final', model, 'FAILED');
+        recordError();
         runBtn.disabled = false;
         return;
     }
@@ -543,6 +586,7 @@ async function rerunAgent(agentId) {
         setAgentStatus(agent.id, 'error', 'error');
         setGlobalStatus(`Erreur sur l'agent ${agent.name} : ${error.message}`, 'error');
         addLogEntry(agent.id, agent.name, agent.color, 'Échec de régénération', model, 'FAILED');
+        recordError();
     }
 }
 
@@ -621,3 +665,4 @@ configForm.addEventListener('submit', (event) => {
 
 buildPipelineDom();
 renderLog();
+renderCommandStats();

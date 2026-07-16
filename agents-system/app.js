@@ -183,6 +183,8 @@ function buildPipelineDom() {
             <div class="agent-actions">
                 <button type="button" class="btn-secondary" data-copy="${agent.id}" disabled>Copier</button>
                 <button type="button" class="btn-secondary" data-rerun="${agent.id}" disabled>Relancer cet agent</button>
+                ${agent.id === 'cmo' ? '<button type="button" class="btn-secondary" data-save-content="cmo" disabled>Enregistrer comme contenu</button>' : ''}
+                ${agent.id === 'sales' ? '<button type="button" class="btn-secondary" data-add-lead="sales">+ Ajouter un prospect</button>' : ''}
             </div>
         `;
         pipelineEl.appendChild(card);
@@ -194,8 +196,25 @@ function buildPipelineDom() {
     pipelineEl.querySelectorAll('[data-rerun]').forEach((btn) => {
         btn.addEventListener('click', () => rerunAgent(btn.dataset.rerun));
     });
+    pipelineEl.querySelectorAll('[data-save-content]').forEach((btn) => {
+        btn.addEventListener('click', saveCmoAsContent);
+    });
+    pipelineEl.querySelectorAll('[data-add-lead]').forEach((btn) => {
+        btn.addEventListener('click', () => window.ManageAPI && window.ManageAPI.openLeadForm());
+    });
 
     updateModelTags();
+}
+
+function saveCmoAsContent() {
+    if (!outputs.cmo) {
+        setGlobalStatus("Lance d'abord le CMO avant d'enregistrer un draft.", 'error');
+        return;
+    }
+    if (window.ManageAPI) {
+        window.ManageAPI.addContentFromText(`Draft CMO — ${new Date().toLocaleDateString('fr-FR')}`, outputs.cmo);
+        setGlobalStatus('Draft enregistré dans le calendrier de contenu.', 'info');
+    }
 }
 
 function updateModelTags() {
@@ -259,7 +278,8 @@ function renderMarkdown(text) {
                 html += '<ul>';
                 inList = true;
             }
-            html += `<li>${inlineFormat(bulletMatch[1])}</li>`;
+            const plainText = escapeHtml(stripMarkdown(bulletMatch[1]));
+            html += `<li><span>${inlineFormat(bulletMatch[1])}</span><button type="button" class="li-add-task" data-task-text="${plainText}">+ tâche</button></li>`;
             return;
         }
         closeList();
@@ -273,19 +293,40 @@ function escapeHtml(str) {
     return str
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function stripMarkdown(str) {
+    return str.replace(/\*\*(.+?)\*\*/g, '$1');
 }
 
 function inlineFormat(str) {
     return escapeHtml(str).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
-function renderAgentOutput(id, text) {
+function wireTaskButtons(container, sourceLabel) {
+    container.querySelectorAll('.li-add-task').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            if (!window.ManageAPI) return;
+            window.ManageAPI.addTask(btn.dataset.taskText, sourceLabel);
+            btn.textContent = 'Ajouté ✓';
+            btn.disabled = true;
+        });
+    });
+}
+
+function renderAgentOutput(id, text, sourceLabel) {
     const el = document.getElementById(`output-${id}`);
     el.innerHTML = renderMarkdown(text);
+    wireTaskButtons(el, sourceLabel);
     document.querySelector(`[data-copy="${id}"]`).disabled = false;
     const rerunBtn = document.querySelector(`[data-rerun="${id}"]`);
     if (rerunBtn) rerunBtn.disabled = false;
+    if (id === 'cmo') {
+        const saveContentBtn = document.querySelector('[data-save-content="cmo"]');
+        if (saveContentBtn) saveContentBtn.disabled = false;
+    }
 }
 
 function renderCeoOutput() {
@@ -298,10 +339,11 @@ function renderCeoOutput() {
         html += `<h4>Debrief opérateur</h4>${renderMarkdown(ceoDebrief)}`;
     }
     el.innerHTML = html || '<p class="agent-placeholder">Le plan de routage et la synthèse finale apparaîtront ici.</p>';
+    wireTaskButtons(el, 'CEO');
     document.querySelector('[data-copy="ceo"]').disabled = !(ceoKickoff || ceoDebrief);
 }
 
-function buildUserMessage(agentIndex, businessContext) {
+function buildUserMessage(agentIndex, businessContext, agentId) {
     let message = `Contexte business initial :\n${businessContext}\n`;
     if (ceoKickoff) {
         message += `\n--- Plan de routage du CEO ---\n${ceoKickoff}\n`;
@@ -310,6 +352,17 @@ function buildUserMessage(agentIndex, businessContext) {
         const prevAgent = AGENTS[i];
         if (outputs[prevAgent.id]) {
             message += `\n--- Sortie de l'agent ${prevAgent.name} (${prevAgent.subtitle}) ---\n${outputs[prevAgent.id]}\n`;
+        }
+    }
+    if (window.ManageAPI) {
+        if (agentId === 'sales') {
+            message += `\n--- CRM actuel (prospects enregistrés) ---\n${window.ManageAPI.getLeadsSummary()}\n`;
+        }
+        if (agentId === 'analyst') {
+            message += `\n--- Relevés de métriques récents ---\n${window.ManageAPI.getMetricsSummary()}\n`;
+        }
+        if (agentId === 'ceo-debrief') {
+            message += `\n--- ${window.ManageAPI.getOverviewSummary()} ---\n`;
         }
     }
     return message;
@@ -424,10 +477,10 @@ async function runPipeline() {
         setAgentStatus(agent.id, 'working', 'working');
         setGlobalStatus(`Exécution de l'agent ${agent.name} (${i + 1}/${AGENTS.length})...`, 'info');
         try {
-            const userMessage = buildUserMessage(i, businessContext);
+            const userMessage = buildUserMessage(i, businessContext, agent.id);
             const result = await callModel(apiKey, model, agent.system, userMessage);
             outputs[agent.id] = result;
-            renderAgentOutput(agent.id, result);
+            renderAgentOutput(agent.id, result, agent.name);
             setAgentStatus(agent.id, 'done', 'done');
             addLogEntry(agent.id, agent.name, agent.color, `Sortie générée (${agent.subtitle.toLowerCase()})`, model, 'COMPLETED');
         } catch (error) {
@@ -442,7 +495,7 @@ async function runPipeline() {
 
     setGlobalStatus('Le CEO rédige la synthèse finale...', 'info');
     try {
-        const debriefMessage = buildUserMessage(AGENTS.length, businessContext);
+        const debriefMessage = buildUserMessage(AGENTS.length, businessContext, 'ceo-debrief');
         ceoDebrief = await callModel(apiKey, model, CEO.debriefSystem, debriefMessage);
         renderCeoOutput();
         setAgentStatus('ceo', 'done', 'done');
@@ -480,10 +533,10 @@ async function rerunAgent(agentId) {
     clearGlobalStatus();
 
     try {
-        const userMessage = buildUserMessage(agentIndex, businessContext);
+        const userMessage = buildUserMessage(agentIndex, businessContext, agent.id);
         const result = await callModel(apiKey, model, agent.system, userMessage);
         outputs[agent.id] = result;
-        renderAgentOutput(agent.id, result);
+        renderAgentOutput(agent.id, result, agent.name);
         setAgentStatus(agent.id, 'done', 'done');
         addLogEntry(agent.id, agent.name, agent.color, `Sortie régénérée (${agent.subtitle.toLowerCase()})`, model, 'COMPLETED');
     } catch (error) {

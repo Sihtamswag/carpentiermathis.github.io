@@ -666,3 +666,420 @@ body {
     font-size: 0.8rem;
     border-top: 1px solid var(--border);
 }
+
+/* --- Tabs --- */
+
+.tab-bar {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+}
+
+.tab-btn {
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 14px 12px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    color: var(--text);
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+/* --- Management panels (CRM / Tasks / Content / Metrics) --- */
+
+.panel-card {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.panel-header h2 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.panel-desc {
+    margin: 8px 0 16px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.inline-form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background-color: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.inline-form label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.inline-form input,
+.inline-form select,
+.inline-form textarea {
+    font-family: inherit;
+    font-size: 0.88rem;
+    padding: 9px 11px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background-color: var(--bg);
+    color: var(--text);
+    resize: vertical;
+}
+
+.inline-form input:focus,
+.inline-form select:focus,
+.inline-form textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.inline-form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.quick-add-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.quick-add-row input {
+    flex: 1;
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background-color: var(--bg-sunken);
+    color: var(--text);
+}
+
+.quick-add-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.record-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.record-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    background-color: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.record-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.record-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.record-title-row strong {
+    font-size: 0.92rem;
+}
+
+.record-sub {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.record-notes {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+.record-actions {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+}
+
+.badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    text-transform: uppercase;
+}
+
+.lead-status-nouveau { color: var(--text-dim); border-color: var(--border); }
+.lead-status-contacte { color: var(--c-researcher); border-color: var(--c-researcher); }
+.lead-status-qualifie { color: var(--warn); border-color: var(--warn); }
+.lead-status-negociation { color: var(--c-sales); border-color: var(--c-sales); }
+.lead-status-gagne { color: var(--working); border-color: var(--working); }
+.lead-status-perdu { color: var(--error); border-color: var(--error); }
+
+.channel-badge {
+    color: var(--c-cmo);
+    border-color: var(--c-cmo);
+}
+
+.status-select-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.status-select-row select {
+    font-family: inherit;
+    font-size: 0.78rem;
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+/* --- Tasks --- */
+
+.task-row {
+    align-items: center;
+}
+
+.task-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.task-done .task-check span {
+    text-decoration: line-through;
+    color: var(--text-dim);
+}
+
+.task-source {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* --- Task-add buttons inside agent output bullet lists --- */
+
+.agent-output li {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.li-add-task {
+    flex-shrink: 0;
+    font-family: inherit;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-dim);
+    cursor: pointer;
+}
+
+.li-add-task:hover:not(:disabled) {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.li-add-task:disabled {
+    color: var(--ok);
+    border-color: var(--ok);
+    cursor: default;
+}
+
+/* --- Metrics: stat tiles + chart --- */
+
+.stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+@media (max-width: 640px) {
+    .stat-tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.stat-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background-color: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.stat-tile-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+}
+
+.stat-tile-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.stat-delta {
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.delta-up { color: var(--working); }
+.delta-down { color: var(--error); }
+.delta-flat { color: var(--text-dim); }
+
+.chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.chart-controls label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
+.chart-controls select {
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background-color: var(--bg-sunken);
+    color: var(--text);
+}
+
+.chart-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.chart-svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+.chart-grid-line {
+    stroke: var(--border);
+    stroke-width: 1;
+}
+
+.chart-tick {
+    fill: var(--text-dim);
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.chart-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.chart-dot {
+    fill: var(--accent);
+    stroke: var(--bg-elevated);
+    stroke-width: 2;
+    cursor: pointer;
+}
+
+.chart-end-label {
+    fill: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.chart-tooltip {
+    position: absolute;
+    background-color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 10;
+}

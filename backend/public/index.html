@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Agents OS — Serveur</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- ===================== LOGIN SCREEN ===================== -->
+    <div id="login-screen" class="login-screen">
+        <form id="login-form" class="login-card">
+            <div class="brand login-brand">
+                <span class="brand-icon"></span>
+                <div>
+                    <h1>Business Agents OS</h1>
+                    <p class="brand-tag">ACCÈS RESTREINT</p>
+                </div>
+            </div>
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" required autocomplete="username">
+            <label for="login-password">Mot de passe</label>
+            <input type="password" id="login-password" required autocomplete="current-password">
+            <div id="login-error" class="global-status error" hidden></div>
+            <button type="submit" id="login-btn">Se connecter</button>
+        </form>
+    </div>
+
+    <!-- ===================== APP ===================== -->
+    <div id="app-shell" hidden>
+
+        <header class="brand-header">
+            <div class="brand">
+                <span class="brand-icon"></span>
+                <div>
+                    <h1>Business Agents OS</h1>
+                    <p class="brand-tag">SERVEUR — AUTOMATISATION RÉELLE</p>
+                </div>
+            </div>
+            <button type="button" id="logout-btn" class="btn-secondary btn-tiny logout-btn">Déconnexion</button>
+        </header>
+
+        <nav class="tab-bar" id="tab-bar">
+            <button type="button" class="tab-btn active" data-tab="pipeline">Pipeline</button>
+            <button type="button" class="tab-btn" data-tab="crm">Prospects</button>
+            <button type="button" class="tab-btn" data-tab="tasks">Tâches</button>
+            <button type="button" class="tab-btn" data-tab="content">Contenu</button>
+            <button type="button" class="tab-btn" data-tab="metrics">Métriques</button>
+            <button type="button" class="tab-btn" data-tab="schedule">Planification</button>
+        </nav>
+
+        <main class="wrap">
+
+            <!-- ===================== PIPELINE TAB ===================== -->
+            <section class="tab-panel active" id="tab-pipeline">
+
+                <section class="notice">
+                    <strong>Ce que fait ce serveur :</strong> il tourne en continu — le pipeline peut se lancer tout seul
+                    sur un horaire programmé, envoyer de vrais emails de prospection, et publier du contenu via un
+                    webhook. Tes données vivent dans une base sur ce serveur, protégées par ton login.
+                </section>
+
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <h2>Command Center</h2>
+                        <span class="badge system-status-badge">● opérationnel</span>
+                    </div>
+                    <div class="stat-tiles" id="command-stats"></div>
+                    <p class="record-sub" id="schedule-info"></p>
+                </section>
+
+                <section class="config-card">
+                    <p class="config-kicker">CONTEXTE BUSINESS</p>
+                    <form id="config-form">
+                        <label for="context-input">Utilisé pour chaque lancement (manuel ou automatique)</label>
+                        <textarea id="context-input" rows="6" placeholder="Décris ton business : produit/service, marché cible, objectif actuel..." required></textarea>
+                        <div class="actions-row">
+                            <button type="submit" id="run-btn">Lancer le pipeline maintenant</button>
+                            <button type="button" id="save-context-btn" class="btn-secondary">Enregistrer sans lancer</button>
+                        </div>
+                    </form>
+                </section>
+
+                <div id="global-status" class="global-status" hidden></div>
+
+                <section class="orgchart">
+                    <div class="ceo-card" id="card-ceo" data-color="ceo">
+                        <div class="agent-card-header">
+                            <span class="agent-emoji">👑</span>
+                            <div>
+                                <h2>CEO / Orchestrator</h2>
+                                <p class="agent-subtitle">COMMAND LAYER</p>
+                            </div>
+                            <span class="agent-status" id="status-ceo">idle</span>
+                        </div>
+                        <p class="ceo-desc">Route le travail, passe en revue le contexte, coordonne les spécialistes et retourne la synthèse finale.</p>
+                        <div class="agent-output" id="output-ceo">
+                            <p class="agent-placeholder">Le plan de routage et la synthèse finale apparaîtront ici.</p>
+                        </div>
+                    </div>
+
+                    <div class="connector" aria-hidden="true"></div>
+
+                    <div id="agent-strip" class="agent-strip"></div>
+                </section>
+
+                <section id="pipeline" class="pipeline-detail"></section>
+
+                <section class="log-panel">
+                    <div class="log-header">
+                        <h3>Agent Log</h3>
+                        <span class="log-badge">LAST 50 — SERVEUR</span>
+                    </div>
+                    <div id="log-list" class="log-list">
+                        <p class="log-empty">Aucune activité pour l'instant.</p>
+                    </div>
+                </section>
+
+            </section>
+
+            <!-- ===================== CRM TAB ===================== -->
+            <section class="tab-panel" id="tab-crm">
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <h2>Prospects</h2>
+                        <button type="button" id="lead-add-btn" class="btn-secondary btn-tiny">+ Nouveau prospect</button>
+                    </div>
+                    <p class="panel-desc">
+                        Persisté sur le serveur. Le bouton "Envoyer par email" envoie un <strong>vrai</strong> email via ta config SMTP.
+                    </p>
+
+                    <form id="lead-form" class="inline-form" hidden>
+                        <input type="hidden" id="lead-editing-id">
+                        <label for="lead-name">Nom / entreprise</label>
+                        <input type="text" id="lead-name" required>
+                        <label for="lead-contact">Contact (email)</label>
+                        <input type="text" id="lead-contact" placeholder="email ou téléphone">
+                        <label for="lead-status">Statut</label>
+                        <select id="lead-status">
+                            <option value="nouveau">Nouveau</option>
+                            <option value="contacte">Contacté</option>
+                            <option value="qualifie">Qualifié</option>
+                            <option value="negociation">Négociation</option>
+                            <option value="gagne">Gagné</option>
+                            <option value="perdu">Perdu</option>
+                        </select>
+                        <label for="lead-next-action">Prochaine action</label>
+                        <input type="text" id="lead-next-action">
+                        <label for="lead-next-date">Date de relance</label>
+                        <input type="date" id="lead-next-date">
+                        <label for="lead-notes">Notes</label>
+                        <textarea id="lead-notes" rows="2"></textarea>
+                        <div class="inline-form-actions">
+                            <button type="submit" class="btn-secondary">Enregistrer</button>
+                            <button type="button" id="lead-cancel-btn" class="btn-secondary">Annuler</button>
+                        </div>
+                    </form>
+
+                    <div id="lead-email-form" class="inline-form" hidden>
+                        <input type="hidden" id="email-lead-id">
+                        <label for="email-subject">Sujet</label>
+                        <input type="text" id="email-subject">
+                        <label for="email-body">Message</label>
+                        <textarea id="email-body" rows="6"></textarea>
+                        <div class="inline-form-actions">
+                            <button type="button" id="email-send-btn" class="btn-secondary">Envoyer l'email</button>
+                            <button type="button" id="email-cancel-btn" class="btn-secondary">Annuler</button>
+                        </div>
+                    </div>
+
+                    <div id="lead-list" class="record-list"></div>
+                </section>
+            </section>
+
+            <!-- ===================== TASKS TAB (KANBAN) ===================== -->
+            <section class="tab-panel" id="tab-tasks">
+                <section class="panel-card">
+                    <div class="panel-header"><h2>Tâches</h2></div>
+                    <form id="task-form" class="quick-add-row">
+                        <input type="text" id="task-input" placeholder="Nouvelle tâche...">
+                        <select id="task-priority">
+                            <option value="basse">Basse</option>
+                            <option value="moyenne" selected>Moyenne</option>
+                            <option value="haute">Haute</option>
+                        </select>
+                        <button type="submit" class="btn-secondary">Ajouter</button>
+                    </form>
+                    <div class="kanban-board">
+                        <div class="kanban-column">
+                            <div class="kanban-column-header"><h3>À faire</h3><span class="badge kanban-count" id="count-pending">0</span></div>
+                            <div class="kanban-list" id="kanban-pending"></div>
+                        </div>
+                        <div class="kanban-column">
+                            <div class="kanban-column-header"><h3>En cours</h3><span class="badge kanban-count" id="count-in_progress">0</span></div>
+                            <div class="kanban-list" id="kanban-in_progress"></div>
+                        </div>
+                        <div class="kanban-column">
+                            <div class="kanban-column-header"><h3>Terminé</h3><span class="badge kanban-count" id="count-done">0</span></div>
+                            <div class="kanban-list" id="kanban-done"></div>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- ===================== CONTENT TAB ===================== -->
+            <section class="tab-panel" id="tab-content">
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <h2>Calendrier de contenu</h2>
+                        <button type="button" id="content-add-btn" class="btn-secondary btn-tiny">+ Nouveau contenu</button>
+                    </div>
+                    <p class="panel-desc">"Publier" appelle réellement ton webhook (Zapier/Make/n8n) au lieu de juste changer un statut.</p>
+
+                    <form id="content-form" class="inline-form" hidden>
+                        <input type="hidden" id="content-editing-id">
+                        <label for="content-title">Titre</label>
+                        <input type="text" id="content-title" required>
+                        <label for="content-channel">Canal</label>
+                        <select id="content-channel">
+                            <option value="reseaux-sociaux">Réseaux sociaux</option>
+                            <option value="email">Email</option>
+                            <option value="blog">Blog</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                        <label for="content-body">Contenu</label>
+                        <textarea id="content-body" rows="5"></textarea>
+                        <div class="inline-form-actions">
+                            <button type="submit" class="btn-secondary">Enregistrer</button>
+                            <button type="button" id="content-cancel-btn" class="btn-secondary">Annuler</button>
+                        </div>
+                    </form>
+
+                    <div id="content-list" class="record-list"></div>
+                </section>
+            </section>
+
+            <!-- ===================== METRICS TAB ===================== -->
+            <section class="tab-panel" id="tab-metrics">
+                <section class="panel-card">
+                    <div class="panel-header"><h2>Nouveau relevé</h2></div>
+                    <form id="metric-form" class="inline-form">
+                        <label for="metric-date">Date</label>
+                        <input type="date" id="metric-date" required>
+                        <label for="metric-leads">Nouveaux leads</label>
+                        <input type="number" id="metric-leads" min="0" step="1" value="0">
+                        <label for="metric-sales">Ventes</label>
+                        <input type="number" id="metric-sales" min="0" step="1" value="0">
+                        <label for="metric-revenue">Revenu ($)</label>
+                        <input type="number" id="metric-revenue" min="0" step="0.01" value="0">
+                        <label for="metric-traffic">Trafic (visites)</label>
+                        <input type="number" id="metric-traffic" min="0" step="1" value="0">
+                        <label for="metric-note">Note (optionnel)</label>
+                        <input type="text" id="metric-note">
+                        <div class="inline-form-actions">
+                            <button type="submit" class="btn-secondary">Enregistrer le relevé</button>
+                        </div>
+                    </form>
+                </section>
+                <section class="panel-card">
+                    <div class="stat-tiles" id="metric-tiles"></div>
+                    <div class="chart-controls">
+                        <label for="metric-select">Tendance</label>
+                        <select id="metric-select">
+                            <option value="leads">Nouveaux leads</option>
+                            <option value="sales">Ventes</option>
+                            <option value="revenue">Revenu</option>
+                            <option value="traffic">Trafic</option>
+                        </select>
+                    </div>
+                    <div id="metric-chart" class="chart-wrap"></div>
+                </section>
+                <section class="panel-card">
+                    <div class="panel-header"><h2>Historique</h2></div>
+                    <div id="metric-table" class="record-list"></div>
+                </section>
+            </section>
+
+            <!-- ===================== SCHEDULE TAB ===================== -->
+            <section class="tab-panel" id="tab-schedule">
+                <section class="panel-card">
+                    <div class="panel-header"><h2>Nouveau rappel récurrent</h2></div>
+                    <form id="schedule-form" class="inline-form">
+                        <label for="schedule-label">Rappel</label>
+                        <input type="text" id="schedule-label" required>
+                        <label for="schedule-frequency">Fréquence</label>
+                        <select id="schedule-frequency">
+                            <option value="quotidien">Quotidien</option>
+                            <option value="hebdomadaire" selected>Hebdomadaire</option>
+                            <option value="mensuel">Mensuel</option>
+                        </select>
+                        <label for="schedule-next-date">Prochaine échéance</label>
+                        <input type="date" id="schedule-next-date" required>
+                        <label for="schedule-notes">Notes (optionnel)</label>
+                        <input type="text" id="schedule-notes">
+                        <div class="inline-form-actions">
+                            <button type="submit" class="btn-secondary">Enregistrer le rappel</button>
+                        </div>
+                    </form>
+                </section>
+                <section class="panel-card">
+                    <div class="panel-header"><h2>Rappels programmés</h2></div>
+                    <div id="schedule-list" class="record-list"></div>
+                </section>
+            </section>
+
+        </main>
+
+        <footer class="ftr">
+            <p>Backend privé — accès protégé par login.</p>
+        </footer>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

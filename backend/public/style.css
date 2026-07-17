@@ -1203,3 +1203,82 @@ body {
 .due-late { color: var(--error); border-color: var(--error); }
 .due-today { color: var(--warn); border-color: var(--warn); }
 .due-upcoming { color: var(--text-dim); border-color: var(--border); text-transform: none; }
+
+/* --- Login screen (backend build only) --- */
+
+.login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 360px;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.login-brand {
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.login-card label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: 12px;
+}
+
+.login-card input {
+    font-family: inherit;
+    font-size: 0.92rem;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background-color: var(--bg-sunken);
+    color: var(--text);
+}
+
+.login-card input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+#login-btn {
+    margin-top: 18px;
+    padding: 12px;
+    font-family: inherit;
+    font-weight: 600;
+    background-color: var(--accent);
+    color: #08201d;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.brand-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brand-header .brand {
+    flex: 1;
+}
+
+.logout-btn {
+    margin-right: 20px;
+}
+
+.lead-email-hint {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}

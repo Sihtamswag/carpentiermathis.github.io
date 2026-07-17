@@ -269,6 +269,24 @@ function renderRunIntoDom(run) {
 }
 
 function wirePipeline() {
+    document.getElementById('test-email-btn').addEventListener('click', async () => {
+        const resultEl = document.getElementById('test-email-result');
+        const btn = document.getElementById('test-email-btn');
+        btn.disabled = true;
+        resultEl.textContent = 'Envoi en cours...';
+        resultEl.className = 'record-sub';
+        try {
+            await api('/pipeline/test-email', { method: 'POST' });
+            resultEl.textContent = 'Envoyé — vérifie ta boîte de réception.';
+            resultEl.className = 'record-sub delta-up';
+        } catch (error) {
+            resultEl.textContent = `Échec : ${error.message}`;
+            resultEl.className = 'record-sub delta-down';
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
     document.getElementById('config-form').addEventListener('submit', async (event) => {
         event.preventDefault();
         const businessContext = document.getElementById('context-input').value.trim();

@@ -67,11 +67,26 @@ Voir `.env.example` pour la liste complète. Les indispensables :
 
 ## 4. Configurer l'envoi d'emails réels
 
-N'importe quel service SMTP fonctionne :
-- **Gmail** : active la validation en 2 étapes, puis crée un [mot de passe d'application](https://myaccount.google.com/apppasswords). `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_SECURE=true`.
-- **Resend / Brevo / SendGrid** : tous ont un tier gratuit avec des identifiants SMTP dédiés — suis leur doc "SMTP relay".
+### Recommandé — Resend (API HTTP, pas de blocage de port possible)
+Beaucoup d'hébergeurs (Railway inclus) bloquent les connexions SMTP sortantes
+(port 465/587) par défaut — ça se manifeste par un timeout, pas une erreur
+claire. Resend contourne le problème en envoyant via une simple requête HTTPS.
+1. Crée un compte gratuit sur [resend.com](https://resend.com) (pas de carte bancaire).
+2. **API Keys** → crée une clé, copie-la dans `RESEND_API_KEY`.
+3. Pour commencer sans configurer de domaine, laisse `EMAIL_FROM=Business Agents OS <onboarding@resend.dev>` —
+   ça fonctionne tout de suite mais seulement pour t'envoyer à toi-même. Pour
+   envoyer à de vrais prospects, vérifie ton propre domaine dans Resend
+   (**Domains** → ajoute des enregistrements DNS chez ton registrar) puis
+   utilise `EMAIL_FROM="Toi <toi@tondomaine.com>"`.
 
-Teste avec : `POST /api/pipeline/test-email` (une fois connecté) — ça t'envoie un email à `NOTIFY_EMAIL`.
+### Alternative — SMTP classique (Gmail, etc.)
+Si tu préfères SMTP (ou que RESEND_API_KEY n'est pas défini, le serveur bascule
+automatiquement dessus) : active la validation en 2 étapes sur ton compte
+Google, crée un [mot de passe d'application](https://myaccount.google.com/apppasswords),
+puis `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_SECURE=true`. Ça marche
+en local ou sur des hébergeurs qui n'ont pas ce blocage — teste d'abord.
+
+Teste avec le bouton **"Tester l'email"** dans l'onglet Pipeline (ou `POST /api/pipeline/test-email`) — ça t'envoie un email à `NOTIFY_EMAIL`.
 
 ## 5. Configurer la publication de contenu
 

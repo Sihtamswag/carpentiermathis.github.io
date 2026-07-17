@@ -5,11 +5,14 @@ const cors = require('cors');
 
 const requireAuth = require('./middleware/requireAuth');
 const { startScheduler } = require('./scheduler');
+const { bootstrapAdmin } = require('./bootstrap-admin');
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'change-me-to-a-long-random-string') {
     console.error('JWT_SECRET manquant ou laissé à sa valeur par défaut — configure un vrai secret avant de déployer.');
     process.exit(1);
 }
+
+bootstrapAdmin();
 
 const app = express();
 app.use(cors());

@@ -42,28 +42,25 @@ docker run -d -p 3000:3000 --env-file .env -v $(pwd)/data:/app/data business-age
 ```
 Mets un reverse proxy (Caddy/nginx) devant avec HTTPS si tu exposes ça sur internet.
 
-## 2. Créer ton compte admin
+## 2. Ton compte admin
 
-Après le premier déploiement (ou en local), lance une fois :
-```bash
-cd backend
-npm install
-cp .env.example .env   # puis remplis les valeurs
-npm run seed-admin
-```
-Ça crée ton compte à partir de `ADMIN_EMAIL` / `ADMIN_PASSWORD`. Une fois fait,
-**retire `ADMIN_PASSWORD` de tes variables d'environnement** — seul le mot de
-passe haché en base compte désormais pour te connecter.
+Rien à faire manuellement : au démarrage, le serveur regarde `ADMIN_EMAIL` /
+`ADMIN_PASSWORD` et crée (ou met à jour) ton compte automatiquement, avant
+même d'écouter sur le port — donc pas de commande spéciale à lancer sur
+Railway/Render, `npm start` suffit.
 
-Sur Railway/Render : lance cette commande une fois via leur "Shell"/"Console",
-ou temporairement comme commande de démarrage, puis reviens à `npm start`.
+Une fois que tu peux te connecter, tu peux laisser `ADMIN_PASSWORD` tel quel
+(le serveur re-hash le même mot de passe à chaque redémarrage, sans effet de
+bord) ou le retirer des variables une fois content — dans ce cas ton compte
+reste actif avec le dernier mot de passe haché en base, tu n'as juste plus de
+copie en clair qui traîne dans les variables d'environnement.
 
 ## 3. Variables d'environnement
 
 Voir `.env.example` pour la liste complète. Les indispensables :
 
 - `JWT_SECRET` — génère avec `openssl rand -hex 32`
-- `ADMIN_EMAIL` / `ADMIN_PASSWORD` — pour `npm run seed-admin`
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD` — ton compte est créé automatiquement au démarrage
 - `OPENAI_API_KEY` — la clé vit sur le serveur maintenant, plus dans le navigateur
 - `PIPELINE_CRON` — ex: `0 8 * * *` pour tous les jours à 8h serveur ; laisse vide pour désactiver
 - `PIPELINE_BUSINESS_CONTEXT` — valeur de secours si tu n'as pas encore sauvegardé de contexte via l'app
@@ -94,7 +91,6 @@ pourrai écrire le code pour les appeler une fois que tu as les identifiants.
 cd backend
 npm install
 cp .env.example .env   # remplis au moins JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, OPENAI_API_KEY
-npm run seed-admin
 npm start
 ```
 Ouvre `http://localhost:3000`, connecte-toi avec `ADMIN_EMAIL`/`ADMIN_PASSWORD`.

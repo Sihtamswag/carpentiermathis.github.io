@@ -14,6 +14,13 @@ from orb.broker import AlpacaBroker, PaperBroker
 from orb.live import run_live
 from orb.strategy import ORBConfig
 
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()  # loads ALPACA_API_KEY / ALPACA_SECRET_KEY from a local .env if present
+except ImportError:
+    pass
+
 ASSET_CLASS_TO_SESSION_KEY = {"us_equity": "us_equity", "forex": "forex", "futures": "us_futures"}
 
 

@@ -73,14 +73,28 @@ Defaults to `PaperBroker`, an in-memory simulator — no API keys, no real
 orders, works for any asset class. It polls Yahoo for 1-minute bars and
 prints fills/PnL as they happen.
 
-For real paper/live execution on US equities via Alpaca:
+### Alpaca setup (US equities paper/live)
 
-```bash
-export ALPACA_API_KEY=...
-export ALPACA_SECRET_KEY=...
-pip install alpaca-py
-python run_live.py --symbol SPY --asset-class us_equity --broker alpaca
-```
+1. Create a free account at [alpaca.markets](https://alpaca.markets/) — no
+   identity verification needed to use paper trading.
+2. In the dashboard, switch to **Paper Trading** (top-left toggle) and open
+   **API Keys** to generate a key + secret.
+3. In `trading-orb/`, copy the env template and paste your keys in:
+   ```bash
+   cp .env.example .env
+   # edit .env: ALPACA_API_KEY=..., ALPACA_SECRET_KEY=...
+   ```
+   `.env` is gitignored — your keys never get committed.
+4. Install the extra dependencies and run:
+   ```bash
+   pip install alpaca-py python-dotenv
+   python run_live.py --symbol SPY --asset-class us_equity --broker alpaca
+   ```
+
+This trades on Alpaca's **paper** endpoint by default (`AlpacaBroker(paper=True)`
+in `orb/broker.py`) — simulated fills against real market data, zero risk.
+Only flip that to `paper=False` once you've validated the strategy and are
+ready to risk real capital.
 
 Forex and futures **backtesting** works out of the box (yfinance covers both
 via tickers like `EURUSD=X` and `ES=F`), but live *execution* for those asset

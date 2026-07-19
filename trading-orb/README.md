@@ -38,6 +38,8 @@ trading-orb/
   tests/test_strategy.py  unit tests (synthetic data, no network needed)
   pinescript/
     orb_dual_range.pine  TradingView indicator: same logic, visual signals + alerts
+  mql5/
+    ORB_DualRange.mq5    MetaTrader 5 indicator: same logic, runs inside the platform
 ```
 
 ## Setup
@@ -153,6 +155,31 @@ You execute the trade yourself in TWS.
    To get the full entry/stop/target text in the alert, set the alert's
    condition to **"Any alert() function call"** instead of the indicator
    name directly.
+
+## MetaTrader 5 indicator (runs inside the platform, e.g. CMC Markets)
+
+If your broker offers MT5 (e.g. CMC Markets Canada), `mql5/ORB_DualRange.mq5`
+runs the same dual-range logic natively inside the platform: it draws the
+OR15/OR30 levels on the chart, marks breakouts with an arrow + entry/stop/target
+label, and raises an MT5 native alert. It never places an order — you still
+execute manually.
+
+1. In MT5: **File > Open Data Folder > MQL5 > Indicators**, copy
+   `ORB_DualRange.mq5` in there.
+2. Open **MetaEditor** (F4 in MT5), open the file, and **Compile** (F7). Fix
+   any error MetaEditor reports — this file hasn't been run through a real
+   MQL5 compiler, only reviewed by hand.
+3. Back in MT5, drag the compiled indicator onto a chart from the Navigator.
+4. **Session Start Hour/Minute are in your broker's *server* time, not your
+   local time** — this is the single most common source of a wrong opening
+   range. Check the server time shown in MT5's Market Watch, or ask your
+   broker's support for their UTC offset, and re-check it after DST changes
+   twice a year (the offset between server time and exchange-local time
+   shifts because not everyone changes clocks on the same date).
+5. For push/email alerts, enable them under **Tools > Options >
+   Notifications** (pair your phone's MetaQuotes ID) or **Email** first —
+   the indicator's `EnablePushNotification` / `EnableEmailAlert` inputs are
+   off by default (popup-only) until you do.
 
 ## Tests
 

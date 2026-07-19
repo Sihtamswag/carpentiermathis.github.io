@@ -1,0 +1,125 @@
+// Dual-range Opening Range Breakout (ORB) — visual signals + alerts.
+// Mirrors the logic in orb/strategy.py: OR15 breakout from minute 15-30,
+// falling back to the wider OR30 from minute 30-40 if OR15 didn't break out.
+// This is signals-only: it does not place orders. Set up a TradingView
+// alert on it (see README) and execute manually in your broker platform.
+
+//@version=5
+indicator("Dual-Range ORB (15/30)", overlay=true, max_labels_count=500)
+
+// === Inputs ===
+sessionStartInput = input.string("0930", title="Session Start (HHmm)", group="Session",
+     tooltip="09:30 America/New_York for US stocks/futures RTH, 08:00 Europe/London for forex, etc.")
+tzInput            = input.string("America/New_York", title="Timezone", group="Session")
+primaryMinutes     = input.int(15, title="Primary Range (minutes)", minval=1, group="ORB")
+extendedMinutes    = input.int(30, title="Extended Range (minutes)", minval=1, group="ORB")
+maxEntryMinutes    = input.int(40, title="Max Entry Window (minutes)", minval=1, group="ORB")
+rrRatio            = input.float(2.0, title="Reward:Risk Ratio", group="ORB")
+bufferPctInput     = input.float(0.05, title="Breakout Buffer %", minval=0, group="ORB")
+
+bufferPct = bufferPctInput / 100
+
+// === Session-open timestamp for the current bar's calendar day ===
+sessionStartHour   = int(str.tonumber(str.substring(sessionStartInput, 0, 2)))
+sessionStartMinute = int(str.tonumber(str.substring(sessionStartInput, 2, 4)))
+
+sessionOpenTime = timestamp(tzInput, year(time, tzInput), month(time, tzInput),
+     dayofmonth(time, tzInput), sessionStartHour, sessionStartMinute)
+
+barMinutesFromOpen = (time - sessionOpenTime) / 60000.0
+
+isNewSession = ta.change(dayofmonth(time, tzInput)) != 0
+
+// === Per-session state ===
+var float orHigh  = na
+var float orLow   = na
+var float extHigh = na
+var float extLow  = na
+var bool tradeTakenToday = false
+
+if isNewSession
+    orHigh := na
+    orLow := na
+    extHigh := na
+    extLow := na
+    tradeTakenToday := false
+
+inPrimaryBuildWindow  = barMinutesFromOpen >= 0 and barMinutesFromOpen < primaryMinutes
+inExtendedBuildWindow = barMinutesFromOpen >= 0 and barMinutesFromOpen < extendedMinutes
+inPrimaryEntryWindow  = barMinutesFromOpen >= primaryMinutes and barMinutesFromOpen < extendedMinutes
+inExtendedEntryWindow = barMinutesFromOpen >= extendedMinutes and barMinutesFromOpen < maxEntryMinutes
+
+if inPrimaryBuildWindow
+    orHigh := na(orHigh) ? high : math.max(orHigh, high)
+    orLow := na(orLow) ? low : math.min(orLow, low)
+
+if inExtendedBuildWindow
+    extHigh := na(extHigh) ? high : math.max(extHigh, high)
+    extLow := na(extLow) ? low : math.min(extLow, low)
+
+// === Breakout detection ===
+longSignal = false
+shortSignal = false
+usedPrimaryRange = false
+
+if not tradeTakenToday and inPrimaryEntryWindow and not na(orHigh)
+    if close > orHigh * (1 + bufferPct)
+        longSignal := true
+        usedPrimaryRange := true
+    else if close < orLow * (1 - bufferPct)
+        shortSignal := true
+        usedPrimaryRange := true
+
+if not tradeTakenToday and inExtendedEntryWindow and not na(extHigh)
+    if close > extHigh * (1 + bufferPct)
+        longSignal := true
+    else if close < extLow * (1 - bufferPct)
+        shortSignal := true
+
+if longSignal or shortSignal
+    tradeTakenToday := true
+
+entryPrice = (longSignal or shortSignal) ? close : na
+stopPrice  = longSignal ? (usedPrimaryRange ? orLow : extLow) : shortSignal ? (usedPrimaryRange ? orHigh : extHigh) : na
+riskPerShare = (longSignal or shortSignal) ? math.abs(entryPrice - stopPrice) : na
+targetPrice = longSignal ? entryPrice + rrRatio * riskPerShare : shortSignal ? entryPrice - rrRatio * riskPerShare : na
+
+// === Plots ===
+plot(orHigh, title="OR15 High", color=color.new(color.blue, 0), style=plot.style_linebr)
+plot(orLow, title="OR15 Low", color=color.new(color.blue, 0), style=plot.style_linebr)
+plot(extHigh, title="OR30 High", color=color.new(color.orange, 0), style=plot.style_linebr)
+plot(extLow, title="OR30 Low", color=color.new(color.orange, 0), style=plot.style_linebr)
+
+plotshape(longSignal, title="Long Signal", location=location.belowbar, style=shape.triangleup,
+     color=color.green, size=size.small)
+plotshape(shortSignal, title="Short Signal", location=location.abovebar, style=shape.triangledown,
+     color=color.red, size=size.small)
+
+if longSignal
+    label.new(bar_index, low, text="LONG\nEntry " + str.tostring(entryPrice, format.mintick) +
+         "\nStop " + str.tostring(stopPrice, format.mintick) +
+         "\nTarget " + str.tostring(targetPrice, format.mintick),
+         style=label.style_label_up, color=color.green, textcolor=color.white, size=size.small)
+
+if shortSignal
+    label.new(bar_index, high, text="SHORT\nEntry " + str.tostring(entryPrice, format.mintick) +
+         "\nStop " + str.tostring(stopPrice, format.mintick) +
+         "\nTarget " + str.tostring(targetPrice, format.mintick),
+         style=label.style_label_down, color=color.red, textcolor=color.white, size=size.small)
+
+// === Alerts ===
+// alertcondition() lets you pick a fixed message when creating the alert in the UI.
+alertcondition(longSignal, title="ORB Long Signal", message="ORB LONG breakout on {{ticker}} at {{close}}")
+alertcondition(shortSignal, title="ORB Short Signal", message="ORB SHORT breakout on {{ticker}} at {{close}}")
+
+// alert() sends a fully dynamic message (entry/stop/target) — requires an alert
+// created with condition "Any alert() function call" (see README).
+if longSignal
+    alert("ORB LONG " + syminfo.ticker + " | entry=" + str.tostring(entryPrice, format.mintick) +
+         " stop=" + str.tostring(stopPrice, format.mintick) +
+         " target=" + str.tostring(targetPrice, format.mintick), alert.freq_once_per_bar_close)
+
+if shortSignal
+    alert("ORB SHORT " + syminfo.ticker + " | entry=" + str.tostring(entryPrice, format.mintick) +
+         " stop=" + str.tostring(stopPrice, format.mintick) +
+         " target=" + str.tostring(targetPrice, format.mintick), alert.freq_once_per_bar_close)

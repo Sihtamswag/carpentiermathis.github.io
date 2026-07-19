@@ -36,6 +36,8 @@ trading-orb/
   run_backtest.py       CLI: backtest
   run_live.py             CLI: paper/live trade
   tests/test_strategy.py  unit tests (synthetic data, no network needed)
+  pinescript/
+    orb_dual_range.pine  TradingView indicator: same logic, visual signals + alerts
 ```
 
 ## Setup
@@ -125,6 +127,32 @@ residents).
 Like Alpaca, the bracket order (entry + stop-loss + take-profit) is placed
 directly on IBKR's servers, so the stop/target execute there — the bot
 doesn't need to stay connected for them to trigger once the position is open.
+
+## TradingView indicator (visual signals, no auto-execution)
+
+TWS itself has no scripting language for custom on-chart alerts, so if you
+want the strategy to show entries directly on a chart and just tell you when
+to trade — rather than run headless and place orders itself — use
+`pinescript/orb_dual_range.pine` on TradingView instead. Same dual-range
+logic as `orb/strategy.py`, but it only plots the OR15/OR30 levels, marks
+breakouts with arrows/labels showing entry/stop/target, and fires alerts.
+You execute the trade yourself in TWS.
+
+1. Open any chart on [tradingview.com](https://www.tradingview.com/), open
+   the **Pine Editor** (bottom panel), paste in the contents of
+   `orb_dual_range.pine`, and click **Add to chart**.
+2. In the indicator's settings, set **Session Start** and **Timezone** to
+   match what you're trading (defaults: `0930` / `America/New_York` for US
+   stocks; use `0800` / `Europe/London` for forex, matching `orb/session.py`).
+   Note TradingView's own symbols differ from the Yahoo ones used for Python
+   backtesting — e.g. `EURUSD` instead of `EURUSD=X`, `ES1!` instead of `ES=F`.
+3. Right-click the chart > **Add alert**. Set condition to the indicator's
+   name, choose **Once Per Bar Close** (important — the logic breaks out on
+   a confirmed close, matching the Python backtest, not on intrabar wicks),
+   and pick a notification (popup, sound, mobile push, email, or webhook).
+   To get the full entry/stop/target text in the alert, set the alert's
+   condition to **"Any alert() function call"** instead of the indicator
+   name directly.
 
 ## Tests
 

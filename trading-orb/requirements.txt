@@ -1,0 +1,8 @@
+pandas>=2.0
+yfinance>=0.2.40
+PyYAML>=6.0
+pytest>=8.0
+
+# Optional: only needed if you use --broker alpaca in run_live.py
+# (live/paper execution for US equities)
+alpaca-py>=0.30.0

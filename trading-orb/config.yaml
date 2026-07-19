@@ -1,0 +1,17 @@
+# Dual-range Opening Range Breakout (ORB) configuration
+
+strategy:
+  primary_range_minutes: 15   # OR15: main breakout range
+  extended_range_minutes: 30  # OR30: wider fallback range if OR15 doesn't break out
+  max_entry_minutes: 40       # no new entries after this many minutes past the open
+  reward_risk_ratio: 2.0      # target = entry +/- reward_risk_ratio * (entry - stop)
+  entry_buffer_pct: 0.05      # price must clear the range by this % to count as a breakout (filters noise)
+
+backtest:
+  interval: 5m   # 5m -> up to ~60 days of history via yfinance; 1m -> up to ~7 days but finer ranges
+  period: 60d
+
+symbols:
+  us_equity: [SPY, QQQ, AAPL]
+  forex: ["EURUSD=X", "GBPUSD=X"]
+  futures: ["ES=F", "NQ=F"]

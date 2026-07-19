@@ -7,3 +7,7 @@ pytest>=8.0
 # (live/paper execution for US equities)
 alpaca-py>=0.30.0
 python-dotenv>=1.0.0
+
+# Optional: only needed if you use --broker ibkr in run_live.py
+# (live/paper execution for US equities, forex and futures via Interactive Brokers)
+ib_async>=1.0.0

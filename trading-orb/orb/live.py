@@ -90,8 +90,16 @@ class LiveORBSession:
     def _manage_open_position(self, bar: pd.Series) -> None:
         pos = self.broker.get_position(self.symbol)
         if pos is None:
+            # Either PaperBroker was closed manually below, or a real broker's
+            # own bracket order (stop-loss/take-profit) already closed it.
             self.done = True
             return
+
+        if self.broker.manages_exits:
+            # Alpaca/IBKR bracket orders execute the stop/target on the
+            # broker's own servers; don't also try to close it from here.
+            return
+
         if pos.side == "long":
             hit_stop, hit_target = bar["low"] <= pos.stop_price, bar["high"] >= pos.target_price
         else:

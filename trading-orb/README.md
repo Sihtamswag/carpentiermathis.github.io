@@ -31,7 +31,7 @@ trading-orb/
     session.py          default session-open time/timezone per asset class
     data.py              historical/intraday data via yfinance
     backtest.py          session-by-session backtest engine + stats
-    broker.py             Broker interface, PaperBroker, AlpacaBroker
+    broker.py             Broker interface, PaperBroker, AlpacaBroker, IBKRBroker
     live.py                 polling paper/live loop
   run_backtest.py       CLI: backtest
   run_live.py             CLI: paper/live trade
@@ -94,14 +94,37 @@ prints fills/PnL as they happen.
 This trades on Alpaca's **paper** endpoint by default (`AlpacaBroker(paper=True)`
 in `orb/broker.py`) — simulated fills against real market data, zero risk.
 Only flip that to `paper=False` once you've validated the strategy and are
-ready to risk real capital.
+ready to risk real capital. Note: Alpaca does not accept Canadian tax
+residents — use IBKR below if that's you.
 
-Forex and futures **backtesting** works out of the box (yfinance covers both
-via tickers like `EURUSD=X` and `ES=F`), but live *execution* for those asset
-classes isn't wired up — you'd need an OANDA account (forex) or Interactive
-Brokers (futures). `orb/broker.py`'s `Broker` interface is the extension
-point: implement `submit_bracket_order` / `get_position` / `close_position`
-against that API and pass an instance to `run_live()`.
+### Interactive Brokers setup (equities, forex and futures — paper/live)
+
+IBKR covers all three asset classes on one account, which is why it's the
+default recommendation if Alpaca isn't available to you (e.g. Canadian
+residents).
+
+1. In **TWS** or **IB Gateway**, go to Configure/File > Global Configuration
+   > API > Settings, check **Enable ActiveX and Socket Clients**, and note
+   the socket port (defaults: TWS paper `7497`, TWS live `7496`, Gateway
+   paper `4002`, Gateway live `4001`).
+2. Log in to TWS/Gateway with your **paper trading** account first — it must
+   stay running while the bot trades, since it's the bridge between the API
+   and IBKR's servers.
+3. Install the extra dependency and run:
+   ```bash
+   pip install ib_async
+   python run_live.py --symbol SPY --asset-class us_equity --broker ibkr --ib-port 7497
+   python run_live.py --symbol EURUSD=X --asset-class forex --broker ibkr --ib-port 7497
+   ```
+4. For futures, `--symbol` must be IBKR's specific contract **local symbol**
+   (e.g. `ESZ4`), not the continuous root (`ES=F`) used for backtesting —
+   futures contracts expire, so the exact contract has to be named. Adjust
+   the `exchange` in `IBKRBroker._contract()` (`orb/broker.py`) if you're
+   trading something other than CME products.
+
+Like Alpaca, the bracket order (entry + stop-loss + take-profit) is placed
+directly on IBKR's servers, so the stop/target execute there — the bot
+doesn't need to stay connected for them to trigger once the position is open.
 
 ## Tests
 
@@ -120,5 +143,6 @@ and both exit paths (stop-loss / session close).
 - Session-open times in `orb/session.py` are defaults (NYSE 09:30 for
   equities/futures, London 08:00 for forex). Override per your instrument if
   it trades a different session.
-- `AlpacaBroker` is the only wired-in live broker; see above for extending
-  to forex/futures.
+- `AlpacaBroker` (US equities) and `IBKRBroker` (equities/forex/futures) are
+  the wired-in live brokers. `orb/broker.py`'s `Broker` interface is the
+  extension point for others (OANDA, etc.).

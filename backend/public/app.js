@@ -6,14 +6,42 @@
 // this tab is closed.
 
 const TOKEN_KEY = 'bao-token';
+const WORKSPACE_KEY = 'bao-workspace';
 
-const AGENTS = [
-    { id: 'researcher', emoji: '🔎', name: 'Researcher', subtitle: 'INTEL GATHERER', color: 'researcher', desc: 'Signaux de marché, briefs de recherche, sources, contexte stratégique.' },
-    { id: 'cmo', emoji: '📣', name: 'CMO', subtitle: 'MARKET VOICE', color: 'cmo', desc: 'Angles de contenu, campagnes, drafts prêts à publier.' },
-    { id: 'sales', emoji: '💼', name: 'Sales Rep', subtitle: 'REVENUE OPS', color: 'sales', desc: 'Qualification des leads, outreach, suivi des opportunités.' },
-    { id: 'developer', emoji: '🛠️', name: 'Dev', subtitle: 'BUILD SYSTEMS', color: 'developer', desc: 'Dashboards, intégrations, scripts, vérification technique.' },
-    { id: 'analyst', emoji: '📊', name: 'Data Analyst', subtitle: 'SIGNAL LAYER', color: 'analyst', desc: 'Analyse de performance, tendances, qualité des signaux.' }
-];
+const AGENTS_BY_WORKSPACE = {
+    business: [
+        { id: 'researcher', emoji: '🔎', name: 'Researcher', subtitle: 'INTEL GATHERER', color: 'researcher', desc: 'Signaux de marché, briefs de recherche, sources, contexte stratégique.' },
+        { id: 'cmo', emoji: '📣', name: 'CMO', subtitle: 'MARKET VOICE', color: 'cmo', desc: 'Angles de contenu, campagnes, drafts prêts à publier.' },
+        { id: 'sales', emoji: '💼', name: 'Sales Rep', subtitle: 'REVENUE OPS', color: 'sales', desc: 'Qualification des leads, outreach, suivi des opportunités.' },
+        { id: 'developer', emoji: '🛠️', name: 'Dev', subtitle: 'BUILD SYSTEMS', color: 'developer', desc: 'Dashboards, intégrations, scripts, vérification technique.' },
+        { id: 'analyst', emoji: '📊', name: 'Data Analyst', subtitle: 'SIGNAL LAYER', color: 'analyst', desc: 'Analyse de performance, tendances, qualité des signaux.' }
+    ],
+    real_estate: [
+        { id: 'researcher', emoji: '🔎', name: 'Researcher', subtitle: 'INTEL GATHERER', color: 'researcher', desc: 'Tendances du marché immobilier local, quartiers à fort potentiel de commission.' },
+        { id: 'cmo', emoji: '📣', name: 'CMO', subtitle: 'MARKET VOICE', color: 'cmo', desc: 'Marque personnelle, contenu immobilier, campagnes pour acheteurs/vendeurs.' },
+        { id: 'sales', emoji: '💼', name: 'Sales Rep', subtitle: 'REVENUE OPS', color: 'sales', desc: 'Qualification de leads acheteurs/vendeurs, outreach, suivi jusqu\'à signature.' },
+        { id: 'developer', emoji: '🛠️', name: 'Dev', subtitle: 'BUILD SYSTEMS', color: 'developer', desc: 'CRM immobilier, intégrations MLS/portails, automatisations de suivi.' },
+        { id: 'analyst', emoji: '📊', name: 'Data Analyst', subtitle: 'SIGNAL LAYER', color: 'analyst', desc: 'KPIs de commissions, taux de conversion, valeur du pipeline.' }
+    ]
+};
+
+const WORKSPACE_LABELS = { business: 'Mon Business', real_estate: 'Real Estate — High Ticket' };
+const CONTEXT_PLACEHOLDERS = {
+    business: 'Décris ton business : produit/service, marché cible, objectif actuel...',
+    real_estate: 'Décris ton activité immobilière : marché/secteur visé, type de propriétés, budget de clientèle cible, objectif de commission...'
+};
+
+function updateWorkspaceUiText(workspace) {
+    const kicker = document.getElementById('config-kicker');
+    if (kicker) kicker.textContent = `CONTEXTE — ${WORKSPACE_LABELS[workspace].toUpperCase()}`;
+    const contextInput = document.getElementById('context-input');
+    if (contextInput) contextInput.placeholder = CONTEXT_PLACEHOLDERS[workspace];
+}
+
+let currentWorkspace = localStorage.getItem(WORKSPACE_KEY) || 'business';
+if (!AGENTS_BY_WORKSPACE[currentWorkspace]) currentWorkspace = 'business';
+
+function AGENTS() { return AGENTS_BY_WORKSPACE[currentWorkspace]; }
 
 const METRIC_LABELS = { leads: 'Nouveaux leads', sales: 'Ventes', revenue: 'Revenu', traffic: 'Trafic' };
 const KANBAN_COLUMNS = ['pending', 'in_progress', 'done'];
@@ -25,7 +53,8 @@ const CONTENT_CHANNEL_LABELS = { 'reseaux-sociaux': 'Réseaux sociaux', email: '
 
 async function api(path, options = {}) {
     const token = localStorage.getItem(TOKEN_KEY);
-    const response = await fetch(`/api${path}`, {
+    const separator = path.includes('?') ? '&' : '?';
+    const response = await fetch(`/api${path}${separator}workspace=${currentWorkspace}`, {
         ...options,
         headers: {
             'Content-Type': 'application/json',
@@ -43,6 +72,26 @@ async function api(path, options = {}) {
     if (!response.ok) throw new Error(data.error || `Erreur serveur (${response.status})`);
     return data;
 }
+
+// ===================== WORKSPACE SWITCHER =====================
+
+function switchWorkspace(workspace) {
+    if (!AGENTS_BY_WORKSPACE[workspace] || workspace === currentWorkspace) return;
+    currentWorkspace = workspace;
+    localStorage.setItem(WORKSPACE_KEY, workspace);
+    document.querySelectorAll('.workspace-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.workspace === workspace);
+    });
+    const badge = document.getElementById('active-workspace-badge');
+    if (badge) badge.textContent = WORKSPACE_LABELS[workspace];
+    updateWorkspaceUiText(workspace);
+    buildPipelineDom();
+    refreshAll();
+}
+
+document.querySelectorAll('.workspace-btn').forEach((btn) => {
+    btn.addEventListener('click', () => switchWorkspace(btn.dataset.workspace));
+});
 
 // ===================== AUTH =====================
 
@@ -167,6 +216,12 @@ function clearGlobalStatus() {
 let appInitialized = false;
 
 function initApp() {
+    document.querySelectorAll('.workspace-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.workspace === currentWorkspace);
+    });
+    const badge = document.getElementById('active-workspace-badge');
+    if (badge) badge.textContent = WORKSPACE_LABELS[currentWorkspace];
+    updateWorkspaceUiText(currentWorkspace);
     if (appInitialized) {
         refreshAll();
         return;
@@ -200,7 +255,7 @@ function buildPipelineDom() {
     const stripEl = document.getElementById('agent-strip');
     pipelineEl.innerHTML = '';
     stripEl.innerHTML = '';
-    AGENTS.forEach((agent) => {
+    AGENTS().forEach((agent) => {
         const chip = document.createElement('a');
         chip.className = 'strip-chip';
         chip.href = `#card-${agent.id}`;
@@ -253,7 +308,7 @@ function renderRunIntoDom(run) {
     ceoOutput.innerHTML = ceoHtml || '<p class="agent-placeholder">Le plan de routage et la synthèse finale apparaîtront ici.</p>';
     setAgentStatus('ceo', run.status === 'error' ? 'error' : 'done', run.status === 'error' ? 'error' : 'done');
 
-    AGENTS.forEach((agent) => {
+    AGENTS().forEach((agent) => {
         const text = run[agent.id];
         if (!text) return;
         const outputEl = document.getElementById(`output-${agent.id}`);
@@ -296,7 +351,7 @@ function wirePipeline() {
         }
         const runBtn = document.getElementById('run-btn');
         runBtn.disabled = true;
-        AGENTS.forEach((a) => setAgentStatus(a.id, 'working', 'working'));
+        AGENTS().forEach((a) => setAgentStatus(a.id, 'working', 'working'));
         setAgentStatus('ceo', 'working', 'working');
         setGlobalStatus('Pipeline en cours sur le serveur (peut prendre 30-90s pour les 7 appels)...', 'info');
         try {
@@ -308,7 +363,7 @@ function wirePipeline() {
             loadLog();
         } catch (error) {
             setGlobalStatus(`Erreur : ${error.message}`, 'error');
-            AGENTS.forEach((a) => setAgentStatus(a.id, 'error', 'error'));
+            AGENTS().forEach((a) => setAgentStatus(a.id, 'error', 'error'));
             setAgentStatus('ceo', 'error', 'error');
         } finally {
             runBtn.disabled = false;

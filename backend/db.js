@@ -100,6 +100,51 @@ CREATE TABLE IF NOT EXISTS activity_log (
 );
 `);
 
+// Migration: add a `workspace` column to every business-data table so the
+// same backend can run two fully separate business units ("business" and
+// "real_estate") side by side. Existing rows default to 'business' so
+// nothing already in production gets lost or reassigned.
+const WORKSPACE_TABLES = ['leads', 'tasks', 'content_items', 'metrics', 'reminders', 'agent_runs', 'activity_log'];
+WORKSPACE_TABLES.forEach((table) => {
+    const columns = db.prepare(`PRAGMA table_info(${table})`).all();
+    const hasWorkspace = columns.some((col) => col.name === 'workspace');
+    if (!hasWorkspace) {
+        db.exec(`ALTER TABLE ${table} ADD COLUMN workspace TEXT NOT NULL DEFAULT 'business'`);
+    }
+});
+
+// `metrics.date` was UNIQUE on its own (one snapshot per day, total). Now
+// that a day can have one snapshot per workspace, that constraint has to
+// move to (date, workspace) — SQLite can't drop a column constraint in
+// place, so rebuild the table the standard way if the old constraint is
+// still there.
+const metricsTableSql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'metrics'").get();
+if (metricsTableSql && /date\s+TEXT\s+UNIQUE/i.test(metricsTableSql.sql)) {
+    db.exec(`
+        CREATE TABLE metrics_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            leads INTEGER NOT NULL DEFAULT 0,
+            sales INTEGER NOT NULL DEFAULT 0,
+            revenue REAL NOT NULL DEFAULT 0,
+            traffic INTEGER NOT NULL DEFAULT 0,
+            note TEXT,
+            created_at INTEGER NOT NULL,
+            workspace TEXT NOT NULL DEFAULT 'business'
+        );
+        INSERT INTO metrics_new (id, date, leads, sales, revenue, traffic, note, created_at, workspace)
+            SELECT id, date, leads, sales, revenue, traffic, note, created_at, workspace FROM metrics;
+        DROP TABLE metrics;
+        ALTER TABLE metrics_new RENAME TO metrics;
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_metrics_date_workspace ON metrics(date, workspace);
+    `);
+}
+
+const WORKSPACES = ['business', 'real_estate'];
+function normalizeWorkspace(value) {
+    return WORKSPACES.includes(value) ? value : 'business';
+}
+
 function getSetting(key, fallback) {
     const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
     return row ? row.value : fallback;
@@ -109,4 +154,4 @@ function setSetting(key, value) {
     db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, value);
 }
 
-module.exports = { db, getSetting, setSetting };
+module.exports = { db, getSetting, setSetting, WORKSPACES, normalizeWorkspace };

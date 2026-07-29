@@ -675,6 +675,38 @@ body {
     border-top: 1px solid var(--border);
 }
 
+/* --- Workspace switcher --- */
+
+.workspace-switcher {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 14px 20px 0;
+    display: flex;
+    gap: 8px;
+}
+
+.workspace-btn {
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.workspace-btn:hover {
+    color: var(--text);
+}
+
+.workspace-btn.active {
+    color: #08201d;
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
 /* --- Tabs --- */
 
 .tab-bar {

@@ -42,6 +42,11 @@
             <button type="button" id="logout-btn" class="btn-secondary btn-tiny logout-btn">Déconnexion</button>
         </header>
 
+        <nav class="workspace-switcher" id="workspace-switcher">
+            <button type="button" class="workspace-btn active" data-workspace="business">Mon Business</button>
+            <button type="button" class="workspace-btn" data-workspace="real_estate">Real Estate — High Ticket</button>
+        </nav>
+
         <nav class="tab-bar" id="tab-bar">
             <button type="button" class="tab-btn active" data-tab="pipeline">Pipeline</button>
             <button type="button" class="tab-btn" data-tab="crm">Prospects</button>
@@ -65,7 +70,10 @@
                 <section class="panel-card">
                     <div class="panel-header">
                         <h2>Command Center</h2>
-                        <span class="badge system-status-badge">● opérationnel</span>
+                        <div>
+                            <span class="badge" id="active-workspace-badge"></span>
+                            <span class="badge system-status-badge">● opérationnel</span>
+                        </div>
                     </div>
                     <div class="stat-tiles" id="command-stats"></div>
                     <p class="record-sub" id="schedule-info"></p>
@@ -76,7 +84,7 @@
                 </section>
 
                 <section class="config-card">
-                    <p class="config-kicker">CONTEXTE BUSINESS</p>
+                    <p class="config-kicker" id="config-kicker">CONTEXTE — MON BUSINESS</p>
                     <form id="config-form">
                         <label for="context-input">Utilisé pour chaque lancement (manuel ou automatique)</label>
                         <textarea id="context-input" rows="6" placeholder="Décris ton business : produit/service, marché cible, objectif actuel..." required></textarea>

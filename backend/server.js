@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 
 const requireAuth = require('./middleware/requireAuth');
+const workspaceMiddleware = require('./middleware/workspace');
 const { startScheduler } = require('./scheduler');
 const { bootstrapAdmin } = require('./bootstrap-admin');
 
@@ -20,13 +21,13 @@ app.use(express.json({ limit: '2mb' }));
 
 app.use('/api/auth', require('./routes/auth'));
 
-app.use('/api/leads', requireAuth, require('./routes/leads'));
-app.use('/api/tasks', requireAuth, require('./routes/tasks'));
-app.use('/api/content', requireAuth, require('./routes/content'));
-app.use('/api/metrics', requireAuth, require('./routes/metrics'));
-app.use('/api/reminders', requireAuth, require('./routes/reminders'));
-app.use('/api/settings', requireAuth, require('./routes/settings'));
-app.use('/api/pipeline', requireAuth, require('./routes/pipeline'));
+app.use('/api/leads', requireAuth, workspaceMiddleware, require('./routes/leads'));
+app.use('/api/tasks', requireAuth, workspaceMiddleware, require('./routes/tasks'));
+app.use('/api/content', requireAuth, workspaceMiddleware, require('./routes/content'));
+app.use('/api/metrics', requireAuth, workspaceMiddleware, require('./routes/metrics'));
+app.use('/api/reminders', requireAuth, workspaceMiddleware, require('./routes/reminders'));
+app.use('/api/settings', requireAuth, workspaceMiddleware, require('./routes/settings'));
+app.use('/api/pipeline', requireAuth, workspaceMiddleware, require('./routes/pipeline'));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => {

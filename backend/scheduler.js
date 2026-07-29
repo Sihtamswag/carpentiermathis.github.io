@@ -1,11 +1,13 @@
 const cron = require('node-cron');
-const { getSetting } = require('./db');
+const { getSetting, WORKSPACES } = require('./db');
 const { runPipeline } = require('./agents/pipeline');
 const email = require('./services/email');
 
-function buildSummaryText(run) {
+const WORKSPACE_LABELS = { business: 'Mon Business', real_estate: 'Real Estate — High Ticket' };
+
+function buildSummaryText(workspace, run) {
     return [
-        `Pipeline exécuté automatiquement le ${new Date(run.finished_at || Date.now()).toLocaleString('fr-FR')}.`,
+        `Pipeline "${WORKSPACE_LABELS[workspace]}" exécuté automatiquement le ${new Date(run.finished_at || Date.now()).toLocaleString('fr-FR')}.`,
         '',
         '--- Plan de routage du CEO ---',
         run.ceoKickoff,
@@ -13,6 +15,35 @@ function buildSummaryText(run) {
         '--- Debrief opérateur ---',
         run.ceoDebrief
     ].join('\n');
+}
+
+async function runWorkspaceIfConfigured(workspace, schedule) {
+    const businessContext = getSetting(`business_context:${workspace}`, '');
+    if (!businessContext) {
+        console.log(`[scheduler] "${WORKSPACE_LABELS[workspace]}" ignoré : aucun contexte configuré.`);
+        return;
+    }
+    console.log(`[scheduler] Lancement automatique du pipeline "${WORKSPACE_LABELS[workspace]}" (${schedule})...`);
+    try {
+        const run = await runPipeline({ businessContext, trigger: 'scheduled', workspace });
+        if (process.env.NOTIFY_EMAIL && email.isConfigured()) {
+            await email.sendEmail({
+                to: process.env.NOTIFY_EMAIL,
+                subject: `Business Agents OS — résumé automatique (${WORKSPACE_LABELS[workspace]})`,
+                text: buildSummaryText(workspace, run)
+            });
+        }
+        console.log(`[scheduler] Run "${WORKSPACE_LABELS[workspace]}" terminé avec succès.`);
+    } catch (error) {
+        console.error(`[scheduler] Échec du run "${WORKSPACE_LABELS[workspace]}" :`, error.message);
+        if (process.env.NOTIFY_EMAIL && email.isConfigured()) {
+            await email.sendEmail({
+                to: process.env.NOTIFY_EMAIL,
+                subject: `Business Agents OS — échec du run automatique (${WORKSPACE_LABELS[workspace]})`,
+                text: `Le run automatique a échoué : ${error.message}`
+            }).catch(() => {});
+        }
+    }
 }
 
 function startScheduler() {
@@ -27,35 +58,14 @@ function startScheduler() {
     }
 
     cron.schedule(schedule, async () => {
-        const businessContext = getSetting('business_context', process.env.PIPELINE_BUSINESS_CONTEXT || '');
-        if (!businessContext) {
-            console.error('Exécution automatique ignorée : aucun contexte business configuré.');
-            return;
-        }
-        console.log(`[scheduler] Lancement automatique du pipeline (${schedule})...`);
-        try {
-            const run = await runPipeline({ businessContext, trigger: 'scheduled' });
-            if (process.env.NOTIFY_EMAIL && email.isConfigured()) {
-                await email.sendEmail({
-                    to: process.env.NOTIFY_EMAIL,
-                    subject: 'Business Agents OS — résumé automatique',
-                    text: buildSummaryText(run)
-                });
-            }
-            console.log('[scheduler] Run terminé avec succès.');
-        } catch (error) {
-            console.error('[scheduler] Échec du run automatique :', error.message);
-            if (process.env.NOTIFY_EMAIL && email.isConfigured()) {
-                await email.sendEmail({
-                    to: process.env.NOTIFY_EMAIL,
-                    subject: 'Business Agents OS — échec du run automatique',
-                    text: `Le run automatique a échoué : ${error.message}`
-                }).catch(() => {});
-            }
+        // Runs sequentially for every workspace that has a business context
+        // configured, so one cron schedule covers both business units.
+        for (const workspace of WORKSPACES) {
+            await runWorkspaceIfConfigured(workspace, schedule);
         }
     });
 
-    console.log(`Pipeline programmé : "${schedule}"`);
+    console.log(`Pipeline programmé : "${schedule}" (pour chaque workspace configuré)`);
 }
 
 module.exports = { startScheduler };

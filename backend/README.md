@@ -11,10 +11,25 @@ réflexion sur l'hébergement.
 
 | Fonctionnalité | Comment |
 |---|---|
-| Pipeline sur horaire | `node-cron` lit `PIPELINE_CRON`, lance les 6 appels (CEO + 5 agents + debrief) tout seul, sauvegarde le run en base |
+| Pipeline sur horaire | `node-cron` lit `PIPELINE_CRON`, lance les 6 appels (CEO + 5 agents + debrief) tout seul pour chaque workspace configuré, sauvegarde le run en base |
 | Résumé automatique par email | Après un run planifié, un email est envoyé à `NOTIFY_EMAIL` via SMTP |
 | Emails de prospection réels | Le Sales Rep peut envoyer un vrai email à un prospect (pas juste un brouillon) via `POST /api/leads/:id/send-email` |
 | Publication de contenu | `POST /api/content/:id/publish` appelle un webhook externe (Zapier/Make/n8n) que tu configures |
+
+## Deux workspaces
+
+L'app a deux espaces complètement séparés (sélecteur en haut de la page) :
+
+- **Mon Business** (`business`) — le système multi-agents générique
+- **Real Estate — High Ticket** (`real_estate`) — dédié à un agent immobilier
+  indépendant : les 5 agents ont des prompts spécialisés (recherche de marché
+  immobilier local, marque personnelle, qualification de leads acheteurs/vendeurs,
+  outils/CRM immobilier, KPIs de commissions)
+
+Chaque workspace a son propre CRM, ses propres tâches, son propre contenu, ses
+propres métriques, ses propres rappels, et son propre contexte business pour le
+pipeline — rien n'est partagé entre les deux. Le pipeline planifié (`PIPELINE_CRON`)
+tourne pour chaque workspace qui a un contexte configuré.
 
 ## 1. Choisir un hébergement
 

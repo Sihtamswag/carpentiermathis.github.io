@@ -5,7 +5,7 @@ const { sendEmail } = require('../services/email');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-    const leads = db.prepare('SELECT * FROM leads ORDER BY next_date IS NULL, next_date, created_at DESC').all();
+    const leads = db.prepare('SELECT * FROM leads WHERE workspace = ? ORDER BY next_date IS NULL, next_date, created_at DESC').all(req.workspace);
     res.json(leads);
 });
 
@@ -13,15 +13,15 @@ router.post('/', (req, res) => {
     const { name, contact, status, nextAction, nextDate, notes } = req.body || {};
     if (!name || !name.trim()) return res.status(400).json({ error: 'Nom requis.' });
     const info = db.prepare(`
-        INSERT INTO leads (name, contact, status, next_action, next_date, notes, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(name.trim(), contact || '', status || 'nouveau', nextAction || '', nextDate || null, notes || '', Date.now());
+        INSERT INTO leads (name, contact, status, next_action, next_date, notes, created_at, workspace)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(name.trim(), contact || '', status || 'nouveau', nextAction || '', nextDate || null, notes || '', Date.now(), req.workspace);
     res.status(201).json(db.prepare('SELECT * FROM leads WHERE id = ?').get(info.lastInsertRowid));
 });
 
 router.put('/:id', (req, res) => {
     const { name, contact, status, nextAction, nextDate, notes } = req.body || {};
-    const existing = db.prepare('SELECT * FROM leads WHERE id = ?').get(req.params.id);
+    const existing = db.prepare('SELECT * FROM leads WHERE id = ? AND workspace = ?').get(req.params.id, req.workspace);
     if (!existing) return res.status(404).json({ error: 'Prospect introuvable.' });
     db.prepare(`
         UPDATE leads SET name = ?, contact = ?, status = ?, next_action = ?, next_date = ?, notes = ?
@@ -39,13 +39,13 @@ router.put('/:id', (req, res) => {
 });
 
 router.delete('/:id', (req, res) => {
-    db.prepare('DELETE FROM leads WHERE id = ?').run(req.params.id);
+    db.prepare('DELETE FROM leads WHERE id = ? AND workspace = ?').run(req.params.id, req.workspace);
     res.status(204).end();
 });
 
 // Really sends an email to the lead's contact address (not just a draft).
 router.post('/:id/send-email', async (req, res) => {
-    const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(req.params.id);
+    const lead = db.prepare('SELECT * FROM leads WHERE id = ? AND workspace = ?').get(req.params.id, req.workspace);
     if (!lead) return res.status(404).json({ error: 'Prospect introuvable.' });
     if (!lead.contact || !lead.contact.includes('@')) {
         return res.status(400).json({ error: "Ce prospect n'a pas d'adresse email valide dans le champ contact." });
@@ -57,9 +57,9 @@ router.post('/:id/send-email', async (req, res) => {
         await sendEmail({ to: lead.contact, subject, text: body });
         db.prepare('UPDATE leads SET last_emailed_at = ? WHERE id = ?').run(Date.now(), lead.id);
         db.prepare(`
-            INSERT INTO activity_log (agent_id, agent_name, color, text, model, status, timestamp)
-            VALUES ('sales', 'Sales Rep', 'sales', ?, 'smtp', 'COMPLETED', ?)
-        `).run(`Email envoyé à ${lead.name} (${lead.contact})`, Date.now());
+            INSERT INTO activity_log (agent_id, agent_name, color, text, model, status, timestamp, workspace)
+            VALUES ('sales', 'Sales Rep', 'sales', ?, 'smtp', 'COMPLETED', ?, ?)
+        `).run(`Email envoyé à ${lead.name} (${lead.contact})`, Date.now(), req.workspace);
         res.json({ sent: true });
     } catch (error) {
         res.status(500).json({ error: error.message });

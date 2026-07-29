@@ -12,21 +12,21 @@ function advanceDate(dateStr, frequency) {
 }
 
 router.get('/', (req, res) => {
-    res.json(db.prepare('SELECT * FROM reminders ORDER BY next_date ASC').all());
+    res.json(db.prepare('SELECT * FROM reminders WHERE workspace = ? ORDER BY next_date ASC').all(req.workspace));
 });
 
 router.post('/', (req, res) => {
     const { label, frequency, nextDate, notes } = req.body || {};
     if (!label || !nextDate) return res.status(400).json({ error: 'Label et date requis.' });
     const info = db.prepare(`
-        INSERT INTO reminders (label, frequency, next_date, notes, created_at)
-        VALUES (?, ?, ?, ?, ?)
-    `).run(label.trim(), frequency || 'hebdomadaire', nextDate, notes || '', Date.now());
+        INSERT INTO reminders (label, frequency, next_date, notes, created_at, workspace)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `).run(label.trim(), frequency || 'hebdomadaire', nextDate, notes || '', Date.now(), req.workspace);
     res.status(201).json(db.prepare('SELECT * FROM reminders WHERE id = ?').get(info.lastInsertRowid));
 });
 
 router.post('/:id/done', (req, res) => {
-    const reminder = db.prepare('SELECT * FROM reminders WHERE id = ?').get(req.params.id);
+    const reminder = db.prepare('SELECT * FROM reminders WHERE id = ? AND workspace = ?').get(req.params.id, req.workspace);
     if (!reminder) return res.status(404).json({ error: 'Rappel introuvable.' });
     const today = new Date().toISOString().slice(0, 10);
     const nextDate = advanceDate(reminder.next_date, reminder.frequency);
@@ -35,7 +35,7 @@ router.post('/:id/done', (req, res) => {
 });
 
 router.delete('/:id', (req, res) => {
-    db.prepare('DELETE FROM reminders WHERE id = ?').run(req.params.id);
+    db.prepare('DELETE FROM reminders WHERE id = ? AND workspace = ?').run(req.params.id, req.workspace);
     res.status(204).end();
 });
 

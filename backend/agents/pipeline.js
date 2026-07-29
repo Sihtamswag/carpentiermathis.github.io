@@ -384,4 +384,29 @@ async function runPipeline({ businessContext, trigger = 'manual', workspace = 'b
     }
 }
 
-module.exports = { runPipeline, getLeadsSummary, getMetricsSummary, getOverviewSummary };
+const SMS_REPLY_SYSTEM = {
+    business: `Tu es le Sales Rep (Revenue Ops) d'un système multi-agents business. Tu rédiges des réponses SMS
+courtes (2-3 phrases maximum, ton direct et humain, pas de formules trop commerciales) dans une conversation
+en cours avec un prospect. On te donne les notes du prospect et l'historique complet des SMS échangés.
+Réponds uniquement avec le texte du SMS à envoyer, sans guillemets ni explication. Réponds en français.`,
+    real_estate: `Tu es le Sales Rep d'un agent immobilier indépendant. Tu rédiges des réponses SMS courtes
+(2-3 phrases maximum, ton chaleureux et professionnel, adapté à une conversation avec un acheteur ou un
+vendeur immobilier) dans une conversation en cours. On te donne les notes du prospect (budget, secteur,
+motivation) et l'historique complet des SMS échangés. Réponds uniquement avec le texte du SMS à envoyer,
+sans guillemets ni explication. Réponds en français.`
+};
+
+async function draftSmsReply({ workspace, lead, history }) {
+    workspace = normalizeWorkspace(workspace);
+    const apiKey = process.env.OPENAI_API_KEY;
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    if (!apiKey) throw new Error('OPENAI_API_KEY manquant côté serveur.');
+
+    const historyText = history.map((m) => `${m.direction === 'inbound' ? 'Prospect' : 'Toi'} : ${m.body}`).join('\n');
+    const userMessage = `Notes sur le prospect "${lead.name}" :\n${lead.notes || '(aucune note)'}\n\nHistorique de la conversation SMS :\n${historyText}\n\nRédige la prochaine réponse à envoyer.`;
+
+    const result = await callModel(apiKey, model, SMS_REPLY_SYSTEM[workspace], userMessage);
+    return result.text;
+}
+
+module.exports = { runPipeline, getLeadsSummary, getMetricsSummary, getOverviewSummary, draftSmsReply };

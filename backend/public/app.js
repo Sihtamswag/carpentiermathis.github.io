@@ -230,6 +230,7 @@ function initApp() {
     buildPipelineDom();
     wirePipeline();
     wireCrm();
+    wireSms();
     wireTasks();
     wireContent();
     wireMetrics();
@@ -525,6 +526,7 @@ function renderLeads() {
             <div class="record-actions">
                 <button type="button" class="btn-secondary btn-tiny" data-lead-edit="${lead.id}">Modifier</button>
                 <button type="button" class="btn-secondary btn-tiny" data-lead-email="${lead.id}">Envoyer par email</button>
+                <button type="button" class="btn-secondary btn-tiny" data-lead-sms="${lead.id}">SMS</button>
                 <button type="button" class="btn-secondary btn-tiny" data-lead-delete="${lead.id}">Supprimer</button>
             </div>
         </div>
@@ -533,6 +535,7 @@ function renderLeads() {
     list.querySelectorAll('[data-lead-edit]').forEach((btn) => btn.addEventListener('click', () => editLead(btn.dataset.leadEdit)));
     list.querySelectorAll('[data-lead-delete]').forEach((btn) => btn.addEventListener('click', () => deleteLead(btn.dataset.leadDelete)));
     list.querySelectorAll('[data-lead-email]').forEach((btn) => btn.addEventListener('click', () => openEmailForm(btn.dataset.leadEmail)));
+    list.querySelectorAll('[data-lead-sms]').forEach((btn) => btn.addEventListener('click', () => openSmsPanel(btn.dataset.leadSms)));
 }
 
 function editLead(id) {
@@ -564,6 +567,100 @@ function openEmailForm(id) {
     document.getElementById('email-subject').value = `Suite à notre échange — ${lead.name}`;
     document.getElementById('email-body').value = '';
     document.getElementById('lead-email-form').hidden = false;
+}
+
+// ===================== SMS CONVERSATION =====================
+
+let currentSmsLeadId = null;
+
+function wireSms() {
+    document.getElementById('sms-close-btn').addEventListener('click', () => {
+        document.getElementById('sms-panel').hidden = true;
+        currentSmsLeadId = null;
+    });
+
+    document.getElementById('sms-send-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const input = document.getElementById('sms-input');
+        const body = input.value.trim();
+        if (!body || !currentSmsLeadId) return;
+        try {
+            await api(`/sms/${currentSmsLeadId}/send`, { method: 'POST', body: { body } });
+            input.value = '';
+            loadSmsMessages(currentSmsLeadId);
+        } catch (error) {
+            alert(`Échec de l'envoi : ${error.message}`);
+        }
+    });
+}
+
+function openSmsPanel(id) {
+    const lead = leadsCache.find((l) => String(l.id) === String(id));
+    if (!lead) return;
+    currentSmsLeadId = lead.id;
+    document.getElementById('sms-panel-title').textContent = `Conversation SMS — ${lead.name}`;
+    document.getElementById('sms-panel').hidden = false;
+    loadSmsMessages(lead.id);
+}
+
+async function loadSmsMessages(leadId) {
+    try {
+        const data = await api(`/sms/${leadId}`);
+        renderSmsMessages(data.messages);
+    } catch (error) {
+        document.getElementById('sms-messages').innerHTML = `<p class="agent-placeholder">Erreur : ${escapeHtml(error.message)}</p>`;
+    }
+}
+
+function renderSmsMessages(messages) {
+    const container = document.getElementById('sms-messages');
+    if (!messages.length) {
+        container.innerHTML = '<p class="agent-placeholder">Aucun message pour l\'instant.</p>';
+        return;
+    }
+    container.innerHTML = messages.map((m) => {
+        if (m.status === 'draft') {
+            return `
+                <div class="sms-bubble sms-draft">
+                    <span class="badge">Brouillon IA — en attente</span>
+                    <textarea class="sms-draft-text" data-draft-id="${m.id}">${escapeHtml(m.body)}</textarea>
+                    <div class="sms-draft-actions">
+                        <button type="button" class="btn-secondary btn-tiny" data-draft-save="${m.id}">Enregistrer</button>
+                        <button type="button" class="btn-secondary btn-tiny" data-draft-approve="${m.id}">Approuver et envoyer</button>
+                        <button type="button" class="btn-secondary btn-tiny" data-draft-reject="${m.id}">Rejeter</button>
+                    </div>
+                </div>
+            `;
+        }
+        const side = m.direction === 'inbound' ? 'sms-in' : 'sms-out';
+        return `<div class="sms-bubble ${side}">${escapeHtml(m.body)}<span class="sms-time">${relativeTime(m.created_at)}</span></div>`;
+    }).join('');
+
+    container.querySelectorAll('[data-draft-approve]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            try {
+                await api(`/sms/${currentSmsLeadId}/drafts/${btn.dataset.draftApprove}/approve`, { method: 'POST' });
+                loadSmsMessages(currentSmsLeadId);
+            } catch (error) {
+                alert(`Échec de l'envoi : ${error.message}`);
+            }
+        });
+    });
+    container.querySelectorAll('[data-draft-save]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            const textarea = container.querySelector(`textarea[data-draft-id="${btn.dataset.draftSave}"]`);
+            await api(`/sms/${currentSmsLeadId}/drafts/${btn.dataset.draftSave}`, { method: 'PUT', body: { body: textarea.value } });
+            loadSmsMessages(currentSmsLeadId);
+        });
+    });
+    container.querySelectorAll('[data-draft-reject]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            await api(`/sms/${currentSmsLeadId}/drafts/${btn.dataset.draftReject}`, { method: 'DELETE' });
+            loadSmsMessages(currentSmsLeadId);
+        });
+    });
+
+    container.scrollTop = container.scrollHeight;
 }
 
 // ===================== TASKS (KANBAN) =====================

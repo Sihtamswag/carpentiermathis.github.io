@@ -103,7 +103,35 @@ en local ou sur des hébergeurs qui n'ont pas ce blocage — teste d'abord.
 
 Teste avec le bouton **"Tester l'email"** dans l'onglet Pipeline (ou `POST /api/pipeline/test-email`) — ça t'envoie un email à `NOTIFY_EMAIL`.
 
-## 5. Configurer la publication de contenu
+## 5. Configurer les conversations SMS (Twilio)
+
+Depuis l'onglet **Prospects**, un bouton **SMS** ouvre une conversation par
+prospect. Toi tu envoies manuellement, et quand le prospect répond, l'IA
+prépare un brouillon de réponse (jamais envoyé automatiquement — tu dois
+l'approuver, le modifier, ou le rejeter).
+
+1. Sur [console.twilio.com](https://console.twilio.com), récupère ton
+   **Account SID** et ton **Auth Token** (page d'accueil du dashboard).
+2. Ajoute ces variables sur Railway :
+   ```
+   TWILIO_ACCOUNT_SID=AC...
+   TWILIO_AUTH_TOKEN=...
+   TWILIO_PHONE_NUMBER=+15145551234   (ton numéro Twilio actif, format E.164)
+   PUBLIC_URL=https://ton-app.up.railway.app   (l'URL publique de TON app, sans / à la fin)
+   ```
+3. Dans la console Twilio, va dans **Phone Numbers → Manage → Active Numbers**,
+   clique sur ton numéro, et sous **"A message comes in"**, mets l'URL
+   webhook : `https://ton-app.up.railway.app/api/sms-webhook` (méthode HTTP POST).
+4. Sauvegarde. `PUBLIC_URL` sert aussi à vérifier que les requêtes reçues sur
+   ce webhook viennent bien de Twilio (signature `X-Twilio-Signature`) —
+   sans cette variable, n'importe qui pourrait appeler ce endpoint.
+
+Le prospect doit avoir son numéro de téléphone dans le champ **Contact** du
+CRM (même format que celui utilisé pour l'envoi, les tirets/espaces sont
+ignorés à la comparaison) pour que les réponses entrantes soient associées
+au bon prospect.
+
+## 6. Configurer la publication de contenu
 
 Le plus simple : crée un **Zap** (Zapier) ou un scénario **Make**/**n8n** avec un
 déclencheur "Webhook" (URL générée automatiquement), puis ajoute une étape qui
@@ -115,7 +143,7 @@ demande son propre compte développeur et sa propre revue d'app) — si tu veux
 une intégration directe plus tard, il faudra créer ces apps toi-même et je
 pourrai écrire le code pour les appeler une fois que tu as les identifiants.
 
-## 6. Lancer en local pour tester
+## 7. Lancer en local pour tester
 
 ```bash
 cd backend

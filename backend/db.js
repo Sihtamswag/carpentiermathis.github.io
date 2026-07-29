@@ -98,13 +98,23 @@ CREATE TABLE IF NOT EXISTS activity_log (
     status TEXT NOT NULL,
     timestamp INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS sms_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lead_id INTEGER NOT NULL,
+    direction TEXT NOT NULL,
+    body TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'sent',
+    ai_generated INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
+);
 `);
 
 // Migration: add a `workspace` column to every business-data table so the
 // same backend can run two fully separate business units ("business" and
 // "real_estate") side by side. Existing rows default to 'business' so
 // nothing already in production gets lost or reassigned.
-const WORKSPACE_TABLES = ['leads', 'tasks', 'content_items', 'metrics', 'reminders', 'agent_runs', 'activity_log'];
+const WORKSPACE_TABLES = ['leads', 'tasks', 'content_items', 'metrics', 'reminders', 'agent_runs', 'activity_log', 'sms_messages'];
 WORKSPACE_TABLES.forEach((table) => {
     const columns = db.prepare(`PRAGMA table_info(${table})`).all();
     const hasWorkspace = columns.some((col) => col.name === 'workspace');

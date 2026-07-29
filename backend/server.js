@@ -28,6 +28,10 @@ app.use('/api/metrics', requireAuth, workspaceMiddleware, require('./routes/metr
 app.use('/api/reminders', requireAuth, workspaceMiddleware, require('./routes/reminders'));
 app.use('/api/settings', requireAuth, workspaceMiddleware, require('./routes/settings'));
 app.use('/api/pipeline', requireAuth, workspaceMiddleware, require('./routes/pipeline'));
+app.use('/api/sms', requireAuth, workspaceMiddleware, require('./routes/sms'));
+
+// Twilio calls this directly — no JWT, verified via X-Twilio-Signature instead.
+app.use('/api/sms-webhook', require('./routes/sms-webhook'));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => {

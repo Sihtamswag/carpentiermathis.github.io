@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Agents OS</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="brand-header">
+        <div class="brand">
+            <span class="brand-icon"></span>
+            <div>
+                <h1>Business Agents OS</h1>
+                <p class="brand-tag">AGENTIC BUSINESS OPERATIONS</p>
+            </div>
+        </div>
+    </header>
+
+    <nav class="tab-bar" id="tab-bar">
+        <button type="button" class="tab-btn active" data-tab="pipeline">Pipeline</button>
+        <button type="button" class="tab-btn" data-tab="crm">Prospects</button>
+        <button type="button" class="tab-btn" data-tab="tasks">Tâches</button>
+        <button type="button" class="tab-btn" data-tab="content">Contenu</button>
+        <button type="button" class="tab-btn" data-tab="metrics">Métriques</button>
+        <button type="button" class="tab-btn" data-tab="schedule">Planification</button>
+    </nav>
+
+    <main class="wrap">
+
+        <!-- ===================== PIPELINE TAB ===================== -->
+        <section class="tab-panel active" id="tab-pipeline">
+
+            <section class="notice">
+                <strong>Comment ça marche :</strong> cette application appelle directement l'API OpenAI depuis ton navigateur
+                avec ta propre clé (accès facturation actif sur
+                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>).
+                Ta clé n'est jamais envoyée ailleurs qu'à OpenAI et n'est pas sauvegardée sur GitHub. Tes prospects, tâches,
+                contenus et métriques restent aussi uniquement dans ton navigateur. Application isolée du reste du portfolio.
+            </section>
+
+            <section class="panel-card">
+                <div class="panel-header">
+                    <h2>Command Center</h2>
+                    <span class="badge system-status-badge">● opérationnel</span>
+                </div>
+                <div class="stat-tiles" id="command-stats"></div>
+            </section>
+
+            <section class="config-card">
+                <p class="config-kicker">CONFIGURATION</p>
+                <form id="config-form">
+                    <label for="api-key">Clé API OpenAI</label>
+                    <input type="password" id="api-key" placeholder="sk-..." autocomplete="off" required>
+                    <label class="checkbox-row">
+                        <input type="checkbox" id="remember-key">
+                        Me souvenir de ma clé sur cet appareil
+                    </label>
+
+                    <label for="model-input">Modèle</label>
+                    <select id="model-input">
+                        <option value="gpt-4o-mini">gpt-4o-mini (rapide, économique)</option>
+                        <option value="gpt-4o">gpt-4o (plus qualitatif)</option>
+                    </select>
+
+                    <label for="context-input">Contexte business</label>
+                    <textarea id="context-input" rows="6" placeholder="Décris ton business : produit/service, marché cible, objectif actuel, ce que tu cherches à accomplir avec ce pipeline..." required></textarea>
+
+                    <div class="actions-row">
+                        <button type="submit" id="run-btn">Lancer le pipeline</button>
+                        <button type="button" id="reset-btn" class="btn-secondary">Réinitialiser</button>
+                    </div>
+                </form>
+            </section>
+
+            <div id="global-status" class="global-status" hidden></div>
+
+            <section class="orgchart">
+                <div class="ceo-card" id="card-ceo" data-color="ceo">
+                    <div class="agent-card-header">
+                        <span class="agent-emoji">👑</span>
+                        <div>
+                            <h2>CEO / Orchestrator</h2>
+                            <p class="agent-subtitle">COMMAND LAYER</p>
+                        </div>
+                        <span class="agent-status" id="status-ceo">idle</span>
+                    </div>
+                    <p class="ceo-desc">Route le travail, passe en revue le contexte, coordonne les spécialistes et retourne la synthèse finale.</p>
+                    <div class="ceo-stats">
+                        <div class="stat">
+                            <span class="stat-label">AGENTS</span>
+                            <span class="stat-value">5</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">APPELS</span>
+                            <span class="stat-value" id="stat-calls">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">RAPPORTS</span>
+                            <span class="stat-value" id="stat-reports">0</span>
+                        </div>
+                        <div class="stat model-stat">
+                            <span class="stat-label">MODEL</span>
+                            <span class="stat-value model-tag" id="model-tag-ceo">—</span>
+                        </div>
+                    </div>
+                    <div class="agent-output" id="output-ceo">
+                        <p class="agent-placeholder">Le plan de routage et la synthèse finale apparaîtront ici.</p>
+                    </div>
+                    <div class="agent-actions">
+                        <button type="button" class="btn-secondary" data-copy="ceo" disabled>Copier</button>
+                    </div>
+                </div>
+
+                <div class="connector" aria-hidden="true"></div>
+
+                <div id="agent-strip" class="agent-strip"></div>
+            </section>
+
+            <section id="pipeline" class="pipeline-detail"></section>
+
+            <section class="log-panel">
+                <div class="log-header">
+                    <h3>Agent Log</h3>
+                    <div class="log-header-actions">
+                        <span class="log-badge">LAST 50</span>
+                        <button type="button" id="clear-log-btn" class="btn-secondary btn-tiny">Vider</button>
+                    </div>
+                </div>
+                <div id="log-list" class="log-list">
+                    <p class="log-empty" id="log-empty">Aucune activité pour l'instant.</p>
+                </div>
+            </section>
+
+            <section id="report-actions" class="report-actions" hidden>
+                <button id="copy-report-btn" class="btn-secondary">Copier le rapport complet</button>
+                <button id="download-report-btn" class="btn-secondary">Télécharger le rapport (.md)</button>
+            </section>
+
+        </section>
+
+        <!-- ===================== CRM TAB ===================== -->
+        <section class="tab-panel" id="tab-crm">
+            <section class="panel-card">
+                <div class="panel-header">
+                    <h2>Prospects</h2>
+                    <button type="button" id="lead-add-btn" class="btn-secondary btn-tiny">+ Nouveau prospect</button>
+                </div>
+                <p class="panel-desc">Suivi persistant de tes prospects. Le Sales Rep voit cette liste lors de ses générations.</p>
+
+                <form id="lead-form" class="inline-form" hidden>
+                    <input type="hidden" id="lead-editing-id">
+                    <label for="lead-name">Nom / entreprise</label>
+                    <input type="text" id="lead-name" placeholder="ex: Atelier Dubois" required>
+
+                    <label for="lead-contact">Contact</label>
+                    <input type="text" id="lead-contact" placeholder="email ou téléphone">
+
+                    <label for="lead-status">Statut</label>
+                    <select id="lead-status">
+                        <option value="nouveau">Nouveau</option>
+                        <option value="contacte">Contacté</option>
+                        <option value="qualifie">Qualifié</option>
+                        <option value="negociation">Négociation</option>
+                        <option value="gagne">Gagné</option>
+                        <option value="perdu">Perdu</option>
+                    </select>
+
+                    <label for="lead-next-action">Prochaine action</label>
+                    <input type="text" id="lead-next-action" placeholder="ex: envoyer le devis">
+
+                    <label for="lead-next-date">Date de relance</label>
+                    <input type="date" id="lead-next-date">
+
+                    <label for="lead-notes">Notes</label>
+                    <textarea id="lead-notes" rows="2" placeholder="Notes libres"></textarea>
+
+                    <div class="inline-form-actions">
+                        <button type="submit" class="btn-secondary">Enregistrer</button>
+                        <button type="button" id="lead-cancel-btn" class="btn-secondary">Annuler</button>
+                    </div>
+                </form>
+
+                <div id="lead-list" class="record-list"></div>
+            </section>
+        </section>
+
+        <!-- ===================== TASKS TAB (KANBAN) ===================== -->
+        <section class="tab-panel" id="tab-tasks">
+            <section class="panel-card">
+                <div class="panel-header">
+                    <h2>Tâches</h2>
+                </div>
+                <p class="panel-desc">Ajoute des tâches manuellement, ou clique sur "+ tâche" sur un point d'un rapport d'agent pour l'ajouter ici.</p>
+
+                <form id="task-form" class="quick-add-row">
+                    <input type="text" id="task-input" placeholder="Nouvelle tâche...">
+                    <select id="task-priority">
+                        <option value="basse">Basse</option>
+                        <option value="moyenne" selected>Moyenne</option>
+                        <option value="haute">Haute</option>
+                    </select>
+                    <button type="submit" class="btn-secondary">Ajouter</button>
+                </form>
+
+                <div class="kanban-board">
+                    <div class="kanban-column">
+                        <div class="kanban-column-header">
+                            <h3>À faire</h3>
+                            <span class="badge kanban-count" id="count-pending">0</span>
+                        </div>
+                        <div class="kanban-list" id="kanban-pending"></div>
+                    </div>
+                    <div class="kanban-column">
+                        <div class="kanban-column-header">
+                            <h3>En cours</h3>
+                            <span class="badge kanban-count" id="count-in_progress">0</span>
+                        </div>
+                        <div class="kanban-list" id="kanban-in_progress"></div>
+                    </div>
+                    <div class="kanban-column">
+                        <div class="kanban-column-header">
+                            <h3>Terminé</h3>
+                            <span class="badge kanban-count" id="count-done">0</span>
+                        </div>
+                        <div class="kanban-list" id="kanban-done"></div>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <!-- ===================== SCHEDULE TAB ===================== -->
+        <section class="tab-panel" id="tab-schedule">
+            <section class="panel-card">
+                <div class="panel-header">
+                    <h2>Nouveau rappel récurrent</h2>
+                </div>
+                <p class="panel-desc">
+                    Liste de rappels que <strong>tu</strong> valides toi-même en ouvrant l'app — sans backend, rien ne
+                    s'exécute automatiquement en arrière-plan, ce n'est pas un vrai cron.
+                </p>
+                <form id="schedule-form" class="inline-form">
+                    <label for="schedule-label">Rappel</label>
+                    <input type="text" id="schedule-label" placeholder="ex: Relancer les prospects en négociation" required>
+
+                    <label for="schedule-frequency">Fréquence</label>
+                    <select id="schedule-frequency">
+                        <option value="quotidien">Quotidien</option>
+                        <option value="hebdomadaire" selected>Hebdomadaire</option>
+                        <option value="mensuel">Mensuel</option>
+                    </select>
+
+                    <label for="schedule-next-date">Prochaine échéance</label>
+                    <input type="date" id="schedule-next-date" required>
+
+                    <label for="schedule-notes">Notes (optionnel)</label>
+                    <input type="text" id="schedule-notes" placeholder="ex: vérifier le CRM avant de relancer">
+
+                    <div class="inline-form-actions">
+                        <button type="submit" class="btn-secondary">Enregistrer le rappel</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="panel-card">
+                <div class="panel-header">
+                    <h2>Rappels programmés</h2>
+                </div>
+                <div id="schedule-list" class="record-list"></div>
+            </section>
+        </section>
+
+        <!-- ===================== CONTENT TAB ===================== -->
+        <section class="tab-panel" id="tab-content">
+            <section class="panel-card">
+                <div class="panel-header">
+                    <h2>Calendrier de contenu</h2>
+                    <button type="button" id="content-add-btn" class="btn-secondary btn-tiny">+ Nouveau contenu</button>
+                </div>
+                <p class="panel-desc">Les drafts sauvegardés depuis le CMO atterrissent ici, avec le reste de ton contenu.</p>
+
+                <form id="content-form" class="inline-form" hidden>
+                    <input type="hidden" id="content-editing-id">
+                    <label for="content-title">Titre</label>
+                    <input type="text" id="content-title" placeholder="ex: Post lancement promo été" required>
+
+                    <label for="content-channel">Canal</label>
+                    <select id="content-channel">
+                        <option value="reseaux-sociaux">Réseaux sociaux</option>
+                        <option value="email">Email</option>
+                        <option value="blog">Blog</option>
+                        <option value="autre">Autre</option>
+                    </select>
+
+                    <label for="content-status">Statut</label>
+                    <select id="content-status">
+                        <option value="brouillon">Brouillon</option>
+                        <option value="pret">Prêt</option>
+                        <option value="publie">Publié</option>
+                    </select>
+
+                    <label for="content-body">Contenu</label>
+                    <textarea id="content-body" rows="5" placeholder="Texte du draft"></textarea>
+
+                    <div class="inline-form-actions">
+                        <button type="submit" class="btn-secondary">Enregistrer</button>
+                        <button type="button" id="content-cancel-btn" class="btn-secondary">Annuler</button>
+                    </div>
+                </form>
+
+                <div id="content-list" class="record-list"></div>
+            </section>
+        </section>
+
+        <!-- ===================== METRICS TAB ===================== -->
+        <section class="tab-panel" id="tab-metrics">
+            <section class="panel-card">
+                <div class="panel-header">
+                    <h2>Nouveau relevé</h2>
+                </div>
+                <p class="panel-desc">Entre tes chiffres régulièrement — le Data Analyst s'en sert pour analyser les tendances réelles.</p>
+                <form id="metric-form" class="inline-form">
+                    <label for="metric-date">Date</label>
+                    <input type="date" id="metric-date" required>
+
+                    <label for="metric-leads">Nouveaux leads</label>
+                    <input type="number" id="metric-leads" min="0" step="1" value="0">
+
+                    <label for="metric-sales">Ventes</label>
+                    <input type="number" id="metric-sales" min="0" step="1" value="0">
+
+                    <label for="metric-revenue">Revenu ($)</label>
+                    <input type="number" id="metric-revenue" min="0" step="0.01" value="0">
+
+                    <label for="metric-traffic">Trafic (visites)</label>
+                    <input type="number" id="metric-traffic" min="0" step="1" value="0">
+
+                    <label for="metric-note">Note (optionnel)</label>
+                    <input type="text" id="metric-note" placeholder="ex: lancement promo">
+
+                    <div class="inline-form-actions">
+                        <button type="submit" class="btn-secondary">Enregistrer le relevé</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="panel-card">
+                <div class="stat-tiles" id="metric-tiles"></div>
+
+                <div class="chart-controls">
+                    <label for="metric-select">Tendance</label>
+                    <select id="metric-select">
+                        <option value="leads">Nouveaux leads</option>
+                        <option value="sales">Ventes</option>
+                        <option value="revenue">Revenu</option>
+                        <option value="traffic">Trafic</option>
+                    </select>
+                </div>
+                <div id="metric-chart" class="chart-wrap"></div>
+            </section>
+
+            <section class="panel-card">
+                <div class="panel-header">
+                    <h2>Historique</h2>
+                </div>
+                <div id="metric-table" class="record-list"></div>
+            </section>
+        </section>
+
+    </main>
+
+    <footer class="ftr">
+        <p>Application isolée — non liée au reste du portfolio.</p>
+    </footer>
+
+    <script src="manage.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

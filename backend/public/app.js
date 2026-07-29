@@ -75,6 +75,15 @@ async function api(path, options = {}) {
 
 // ===================== WORKSPACE SWITCHER =====================
 
+function updateListingsTabVisibility(workspace) {
+    const tabBtn = document.getElementById('tab-btn-listings');
+    if (!tabBtn) return;
+    tabBtn.hidden = workspace !== 'real_estate';
+    if (workspace !== 'real_estate' && tabBtn.classList.contains('active')) {
+        switchTab('pipeline');
+    }
+}
+
 function switchWorkspace(workspace) {
     if (!AGENTS_BY_WORKSPACE[workspace] || workspace === currentWorkspace) return;
     currentWorkspace = workspace;
@@ -85,6 +94,7 @@ function switchWorkspace(workspace) {
     const badge = document.getElementById('active-workspace-badge');
     if (badge) badge.textContent = WORKSPACE_LABELS[workspace];
     updateWorkspaceUiText(workspace);
+    updateListingsTabVisibility(workspace);
     buildPipelineDom();
     refreshAll();
 }
@@ -222,6 +232,7 @@ function initApp() {
     const badge = document.getElementById('active-workspace-badge');
     if (badge) badge.textContent = WORKSPACE_LABELS[currentWorkspace];
     updateWorkspaceUiText(currentWorkspace);
+    updateListingsTabVisibility(currentWorkspace);
     if (appInitialized) {
         refreshAll();
         return;
@@ -231,6 +242,7 @@ function initApp() {
     wirePipeline();
     wireCrm();
     wireSms();
+    wireListings();
     wireTasks();
     wireContent();
     wireMetrics();
@@ -247,6 +259,7 @@ function refreshAll() {
     loadContent();
     loadMetrics();
     loadReminders();
+    loadListings();
 }
 
 // ===================== PIPELINE =====================
@@ -993,4 +1006,94 @@ function renderReminders(reminders) {
     }).join('');
     list.querySelectorAll('[data-reminder-done]').forEach((btn) => btn.addEventListener('click', async () => { await api(`/reminders/${btn.dataset.reminderDone}/done`, { method: 'POST' }); loadReminders(); }));
     list.querySelectorAll('[data-reminder-delete]').forEach((btn) => btn.addEventListener('click', async () => { await api(`/reminders/${btn.dataset.reminderDelete}`, { method: 'DELETE' }); loadReminders(); }));
+}
+
+// ===================== LISTINGS (real estate workspace) =====================
+
+const PROPERTY_TYPE_LABELS = { multiplex: 'Multiplex', condo: 'Condo', maison: 'Maison unifamiliale', terrain: 'Terrain', commercial: 'Commercial', autre: 'Autre' };
+const LISTING_STATUS_LABELS = { active: 'Active', vendu: 'Vendu', retire: 'Retiré' };
+
+let listingsCache = [];
+
+function wireListings() {
+    const form = document.getElementById('listing-form');
+    const addBtn = document.getElementById('listing-add-btn');
+    const cancelBtn = document.getElementById('listing-cancel-btn');
+    const editingId = document.getElementById('listing-editing-id');
+
+    addBtn.addEventListener('click', () => {
+        editingId.value = '';
+        form.reset();
+        form.hidden = false;
+    });
+    cancelBtn.addEventListener('click', () => { form.hidden = true; });
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const payload = {
+            title: document.getElementById('listing-title').value.trim(),
+            propertyType: document.getElementById('listing-type').value,
+            price: Number(document.getElementById('listing-price').value) || 0,
+            address: document.getElementById('listing-address').value.trim(),
+            url: document.getElementById('listing-url').value.trim(),
+            status: document.getElementById('listing-status').value,
+            notes: document.getElementById('listing-notes').value.trim()
+        };
+        if (editingId.value) {
+            await api(`/listings/${editingId.value}`, { method: 'PUT', body: payload });
+        } else {
+            await api('/listings', { method: 'POST', body: payload });
+        }
+        form.hidden = true;
+        loadListings();
+    });
+}
+
+async function loadListings() {
+    if (currentWorkspace !== 'real_estate') return;
+    try {
+        listingsCache = await api('/listings');
+        renderListings();
+    } catch (error) { /* ignore */ }
+}
+
+function renderListings() {
+    const list = document.getElementById('listing-list');
+    if (!list) return;
+    if (!listingsCache.length) { list.innerHTML = '<p class="agent-placeholder">Aucune annonce enregistrée.</p>'; return; }
+    list.innerHTML = listingsCache.map((item) => `
+        <div class="record-row">
+            <div class="record-main">
+                <div class="record-title-row">
+                    <strong>${escapeHtml(item.title)}</strong>
+                    <span class="badge">${PROPERTY_TYPE_LABELS[item.property_type] || item.property_type}</span>
+                    <span class="badge ${item.status === 'active' ? 'due-upcoming' : ''}">${LISTING_STATUS_LABELS[item.status] || item.status}</span>
+                </div>
+                <p class="record-sub">${item.price ? `${Number(item.price).toLocaleString('fr-FR')} $` : 'Prix non précisé'}${item.address ? ` — ${escapeHtml(item.address)}` : ''}</p>
+                ${item.url ? `<p class="record-sub"><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${escapeHtml(item.url)}</a></p>` : ''}
+                ${item.notes ? `<p class="record-notes">${escapeHtml(item.notes)}</p>` : ''}
+            </div>
+            <div class="record-actions">
+                <button type="button" class="btn-secondary btn-tiny" data-listing-edit="${item.id}">Modifier</button>
+                <button type="button" class="btn-secondary btn-tiny" data-listing-delete="${item.id}">Supprimer</button>
+            </div>
+        </div>
+    `).join('');
+
+    list.querySelectorAll('[data-listing-edit]').forEach((btn) => btn.addEventListener('click', () => editListing(btn.dataset.listingEdit)));
+    list.querySelectorAll('[data-listing-delete]').forEach((btn) => btn.addEventListener('click', async () => { await api(`/listings/${btn.dataset.listingDelete}`, { method: 'DELETE' }); loadListings(); }));
+}
+
+function editListing(id) {
+    const item = listingsCache.find((l) => String(l.id) === String(id));
+    if (!item) return;
+    document.getElementById('listing-editing-id').value = item.id;
+    document.getElementById('listing-title').value = item.title;
+    document.getElementById('listing-type').value = item.property_type;
+    document.getElementById('listing-price').value = item.price || '';
+    document.getElementById('listing-address').value = item.address || '';
+    document.getElementById('listing-url').value = item.url || '';
+    document.getElementById('listing-status').value = item.status;
+    document.getElementById('listing-notes').value = item.notes || '';
+    document.getElementById('listing-form').hidden = false;
 }

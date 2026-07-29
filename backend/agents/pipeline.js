@@ -191,6 +191,14 @@ function getMetricsSummary(workspace) {
     ).join('\n');
 }
 
+function getListingsSummary(workspace) {
+    const rows = db.prepare("SELECT * FROM listings WHERE workspace = ? AND status = 'active' ORDER BY created_at DESC LIMIT 10").all(workspace);
+    if (!rows.length) return "Aucune annonce active enregistrée pour l'instant — ajoute des annonces réelles dans l'onglet Annonces pour que le Researcher et le Sales Rep travaillent avec de vraies données au lieu de tendances générales.";
+    return rows.map((l) =>
+        `- ${l.title} (${l.property_type})${l.price ? `, ${l.price}$` : ''}${l.address ? `, ${l.address}` : ''}${l.notes ? ` — ${l.notes}` : ''}`
+    ).join('\n');
+}
+
 function getOverviewSummary(workspace) {
     const openTasks = db.prepare("SELECT COUNT(*) c FROM tasks WHERE workspace = ? AND column_name != 'done'").get(workspace).c;
     const activeLeads = db.prepare("SELECT COUNT(*) c FROM leads WHERE workspace = ? AND status NOT IN ('gagne', 'perdu')").get(workspace).c;
@@ -304,7 +312,7 @@ function buildUserMessage(businessContext, ceoKickoff, priorOutputs, extraContex
     priorOutputs.forEach(({ name, text }) => {
         message += `\n--- Sortie de l'agent ${name} ---\n${text}\n`;
     });
-    if (extraContext) message += `\n--- ${extraContext} ---\n`;
+    if (extraContext) message += `\n${extraContext}\n`;
     return message;
 }
 
@@ -343,9 +351,13 @@ async function runPipeline({ businessContext, trigger = 'manual', workspace = 'b
         const outputsByColumn = {};
 
         for (const agent of AGENTS) {
-            let extraContext = null;
-            if (agent.id === 'sales') extraContext = `CRM actuel (prospects enregistrés) :\n${getLeadsSummary(workspace)}`;
-            if (agent.id === 'analyst') extraContext = `Relevés de métriques récents :\n${getMetricsSummary(workspace)}`;
+            const extraBlocks = [];
+            if (agent.id === 'sales') extraBlocks.push(`--- CRM actuel (prospects enregistrés) ---\n${getLeadsSummary(workspace)}`);
+            if (agent.id === 'analyst') extraBlocks.push(`--- Relevés de métriques récents ---\n${getMetricsSummary(workspace)}`);
+            if (workspace === 'real_estate' && (agent.id === 'researcher' || agent.id === 'sales')) {
+                extraBlocks.push(`--- Annonces réelles enregistrées ---\n${getListingsSummary(workspace)}`);
+            }
+            const extraContext = extraBlocks.length ? extraBlocks.join('\n') : null;
 
             const userMessage = buildUserMessage(businessContext, kickoff.text, priorOutputs, extraContext);
             const result = await callModel(apiKey, model, agent.system, userMessage);
@@ -359,7 +371,7 @@ async function runPipeline({ businessContext, trigger = 'manual', workspace = 'b
             if (agent.id === 'sales') autoCreateLeadProfile(workspace, result.text, trigger);
         }
 
-        const debriefMessage = buildUserMessage(businessContext, kickoff.text, priorOutputs, getOverviewSummary(workspace));
+        const debriefMessage = buildUserMessage(businessContext, kickoff.text, priorOutputs, `--- ${getOverviewSummary(workspace)} ---`);
         const debrief = await callModel(apiKey, model, CEO.debriefSystem, debriefMessage);
         update({ ceo_debrief: debrief.text });
         track(debrief.tokens);

@@ -239,6 +239,65 @@ function logActivity(workspace, agentId, agentName, color, text, model, status) 
     `).run(agentId, agentName, color, text, model, status, Date.now(), workspace);
 }
 
+// Pulls only the bullet points that sit under a "Prochaines actions" (or
+// close variant) label, until the next non-bullet, non-blank line ends the
+// section — so KPI descriptions and "Points clés" bullets elsewhere in the
+// debrief don't get swept in as tasks.
+function extractActionItems(text) {
+    const lines = text.split('\n');
+    const actions = [];
+    let inSection = false;
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+        if (/prochaines?\s+(actions?|étapes)/i.test(line) && line.length < 60) {
+            inSection = true;
+            continue;
+        }
+        const bulletMatch = line.match(/^[-*]\s+(.*)/);
+        if (inSection && bulletMatch) {
+            actions.push(bulletMatch[1].replace(/\*\*(.+?)\*\*/g, '$1').trim());
+        } else if (inSection) {
+            inSection = false;
+        }
+    }
+    return actions;
+}
+
+function autoCreateTasksFromDebrief(workspace, debriefText, trigger) {
+    const actions = extractActionItems(debriefText);
+    const now = Date.now();
+    actions.forEach((text) => {
+        db.prepare(`
+            INSERT INTO tasks (text, source, priority, column_name, created_at, workspace)
+            VALUES (?, 'CEO Debrief', 'moyenne', 'pending', ?, ?)
+        `).run(text, now, workspace);
+    });
+    if (actions.length) {
+        logActivity(workspace, 'ceo', 'CEO', 'ceo', `${actions.length} tâche(s) créée(s) automatiquement (${trigger})`, null, 'COMPLETED');
+    }
+    return actions.length;
+}
+
+function autoSaveCmoContent(workspace, cmoText, trigger) {
+    const title = `Draft CMO — ${new Date().toLocaleDateString('fr-FR')}`;
+    db.prepare(`
+        INSERT INTO content_items (title, channel, status, body, created_at, workspace)
+        VALUES (?, 'reseaux-sociaux', 'brouillon', ?, ?, ?)
+    `).run(title, cmoText, Date.now(), workspace);
+    logActivity(workspace, 'cmo', 'CMO', 'cmo', `Draft enregistré automatiquement dans le calendrier de contenu (${trigger})`, null, 'COMPLETED');
+}
+
+function autoCreateLeadProfile(workspace, salesText, trigger) {
+    const name = `Profil ICP suggéré — ${new Date().toLocaleDateString('fr-FR')}`;
+    const nextAction = "Qualifier dès qu'un contact réel correspond à ce profil";
+    db.prepare(`
+        INSERT INTO leads (name, contact, status, next_action, notes, created_at, workspace)
+        VALUES (?, '', 'nouveau', ?, ?, ?, ?)
+    `).run(name, nextAction, salesText.slice(0, 2000), Date.now(), workspace);
+    logActivity(workspace, 'sales', 'Sales Rep', 'sales', `Profil de prospect suggéré ajouté au CRM (${trigger})`, null, 'COMPLETED');
+}
+
 function buildUserMessage(businessContext, ceoKickoff, priorOutputs, extraContext) {
     let message = `Contexte initial :\n${businessContext}\n`;
     if (ceoKickoff) message += `\n--- Plan de routage du CEO ---\n${ceoKickoff}\n`;
@@ -295,6 +354,9 @@ async function runPipeline({ businessContext, trigger = 'manual', workspace = 'b
             priorOutputs.push({ name: agent.name, text: result.text });
             outputsByColumn[agent.id] = result.text;
             logActivity(workspace, agent.id, agent.name, agent.color, `Sortie générée (${trigger})`, model, 'COMPLETED');
+
+            if (agent.id === 'cmo') autoSaveCmoContent(workspace, result.text, trigger);
+            if (agent.id === 'sales') autoCreateLeadProfile(workspace, result.text, trigger);
         }
 
         const debriefMessage = buildUserMessage(businessContext, kickoff.text, priorOutputs, getOverviewSummary(workspace));
@@ -302,10 +364,19 @@ async function runPipeline({ businessContext, trigger = 'manual', workspace = 'b
         update({ ceo_debrief: debrief.text });
         track(debrief.tokens);
         logActivity(workspace, 'ceo', 'CEO', 'ceo', `Synthèse opérateur générée (${trigger})`, model, 'COMPLETED');
+        const tasksCreated = autoCreateTasksFromDebrief(workspace, debrief.text, trigger);
 
         update({ status: 'completed', finished_at: Date.now() });
 
-        return { runId, workspace, ceoKickoff: kickoff.text, ceoDebrief: debrief.text, ...outputsByColumn, totalTokens };
+        return {
+            runId,
+            workspace,
+            ceoKickoff: kickoff.text,
+            ceoDebrief: debrief.text,
+            ...outputsByColumn,
+            totalTokens,
+            autoCreated: { tasks: tasksCreated, content: 1, leads: 1 }
+        };
     } catch (error) {
         update({ status: 'error', error: error.message, finished_at: Date.now() });
         logActivity(workspace, 'ceo', 'CEO', 'ceo', `Échec du pipeline (${trigger}) : ${error.message}`, model, 'FAILED');

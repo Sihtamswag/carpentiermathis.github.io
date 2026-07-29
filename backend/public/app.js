@@ -358,9 +358,20 @@ function wirePipeline() {
             await api('/settings', { method: 'PUT', body: { businessContext } });
             const run = await api('/pipeline/run', { method: 'POST', body: { businessContext } });
             renderRunIntoDom(run);
-            clearGlobalStatus();
+            if (run.autoCreated) {
+                const { tasks, content, leads } = run.autoCreated;
+                setGlobalStatus(
+                    `Terminé — ${tasks} tâche(s) ajoutée(s) au Kanban, ${content} draft de contenu enregistré, ${leads} profil de prospect ajouté au CRM.`,
+                    'info'
+                );
+            } else {
+                clearGlobalStatus();
+            }
             loadCommandStats();
             loadLog();
+            loadTasks();
+            loadContent();
+            loadLeads();
         } catch (error) {
             setGlobalStatus(`Erreur : ${error.message}`, 'error');
             AGENTS().forEach((a) => setAgentStatus(a.id, 'error', 'error'));

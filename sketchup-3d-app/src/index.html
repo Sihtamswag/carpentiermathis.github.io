@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Modeleur 3D</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="toolbar">
+    <button id="tool-select" class="tool active" title="Sélection / Orbite">Sélection</button>
+    <button id="tool-draw" class="tool" title="Dessiner une forme au sol">Dessiner</button>
+    <button id="tool-pushpull" class="tool" title="Pousser / Tirer une face">Push/Pull</button>
+    <span class="sep"></span>
+    <button id="action-new" title="Nouveau projet">Nouveau</button>
+    <button id="action-open" title="Ouvrir un projet">Ouvrir</button>
+    <button id="action-save" title="Enregistrer le projet">Enregistrer</button>
+    <button id="action-export" title="Exporter en OBJ">Exporter OBJ</button>
+    <span class="sep"></span>
+    <span id="status">Sélection : cliquez-glissez pour orbiter la caméra</span>
+  </div>
+  <div id="viewport"></div>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "../node_modules/three/build/three.module.js",
+        "three/addons/": "../node_modules/three/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+  background: #2b2f36;
+  color: #e8e8e8;
+}
+
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: #1e2126;
+  border-bottom: 1px solid #3a3f47;
+  height: 46px;
+}
+
+#toolbar button {
+  background: #333844;
+  color: #e8e8e8;
+  border: 1px solid #454b57;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#toolbar button:hover {
+  background: #3d4350;
+}
+
+#toolbar button.tool.active {
+  background: #4a7dff;
+  border-color: #4a7dff;
+  color: #fff;
+}
+
+#toolbar .sep {
+  width: 1px;
+  height: 24px;
+  background: #454b57;
+  margin: 0 4px;
+}
+
+#status {
+  margin-left: auto;
+  font-size: 12px;
+  color: #9aa2b1;
+}
+
+#viewport {
+  position: absolute;
+  top: 46px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+#viewport canvas {
+  display: block;
+}

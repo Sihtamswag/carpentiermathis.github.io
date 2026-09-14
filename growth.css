@@ -1,0 +1,227 @@
+/* growth.css */
+
+.growth-body {
+    background: #000;
+    background-image: none;
+}
+
+.growth-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 16px 10px 16px;
+    box-sizing: border-box;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 100%);
+    z-index: 10;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.growth-back {
+    position: absolute;
+    left: 16px;
+    top: 14px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.growth-title {
+    color: #fff;
+    font-weight: bold;
+    font-size: 17px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    letter-spacing: 0.5px;
+}
+
+.growth-subtitle {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 11px;
+    margin-top: 2px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.growth-feed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    background: #000;
+    z-index: 1;
+}
+
+.growth-card {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.growth-tag {
+    position: absolute;
+    top: 70px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 20px;
+}
+
+.growth-quote-wrap {
+    max-width: 82%;
+    text-align: center;
+}
+
+.growth-quote {
+    color: #fff;
+    font-family: 'Dancing Script', Arial, Helvetica, sans-serif;
+    font-size: clamp(22px, 6vw, 34px);
+    line-height: 1.4;
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    margin: 0;
+}
+
+.growth-author {
+    margin-top: 22px;
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.growth-source {
+    margin-top: 4px;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    font-style: italic;
+}
+
+.growth-narration-bar {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 100px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.growth-narration-progress {
+    height: 100%;
+    width: 0%;
+    background: #fff;
+    transition: width 0.1s linear;
+}
+
+.growth-waveform {
+    position: absolute;
+    left: 20px;
+    bottom: 112px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 16px;
+}
+
+.growth-waveform span {
+    width: 3px;
+    height: 4px;
+    background: #fff;
+    border-radius: 2px;
+    animation: growth-bounce 0.9s ease-in-out infinite;
+}
+
+.growth-waveform span:nth-child(2) { animation-delay: 0.15s; }
+.growth-waveform span:nth-child(3) { animation-delay: 0.3s; }
+.growth-waveform span:nth-child(4) { animation-delay: 0.45s; }
+
+.growth-card:not(.is-playing) .growth-waveform span {
+    animation-play-state: paused;
+    height: 4px;
+}
+
+@keyframes growth-bounce {
+    0%, 100% { height: 4px; }
+    50% { height: 16px; }
+}
+
+.growth-actions {
+    position: absolute;
+    right: 16px;
+    bottom: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    z-index: 2;
+}
+
+.growth-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.growth-btn .icon {
+    font-size: 26px;
+    line-height: 1;
+    transition: transform 0.15s ease;
+}
+
+.growth-btn:active .icon {
+    transform: scale(1.25);
+}
+
+.growth-play-hint {
+    position: absolute;
+    left: 20px;
+    bottom: 122px;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+}
+
+@media (min-width: 700px) {
+    .growth-feed {
+        max-width: 420px;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .growth-topbar {
+        max-width: 420px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}

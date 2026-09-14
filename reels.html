@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reels</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="reels.css">
+</head>
+
+<body class="reels-body">
+
+    <div class="reels-topbar">
+        <a href="index.html" class="reels-back">← Portfolio</a>
+        <span class="reels-title">Reels</span>
+    </div>
+
+    <main class="reels-feed" id="reelsFeed">
+
+        <section class="reel" data-liked="false">
+            <video class="reel-video" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" loop muted playsinline></video>
+            <div class="reel-overlay">
+                <div class="reel-info">
+                    <p class="reel-user">@carpentier_mathis</p>
+                    <p class="reel-caption">Un lapin, une forêt, une vengeance. 🐰🌳</p>
+                    <p class="reel-audio">🎵 Son original - carpentier_mathis</p>
+                </div>
+                <div class="reel-actions">
+                    <button class="reel-btn like-btn" aria-label="J'aime">
+                        <span class="icon">🤍</span>
+                        <span class="count">128</span>
+                    </button>
+                    <button class="reel-btn comment-btn" aria-label="Commenter">
+                        <span class="icon">💬</span>
+                        <span class="count">12</span>
+                    </button>
+                    <button class="reel-btn share-btn" aria-label="Partager">
+                        <span class="icon">↗️</span>
+                        <span class="count">Partager</span>
+                    </button>
+                    <button class="reel-btn mute-btn" aria-label="Son">
+                        <span class="icon">🔇</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="reel" data-liked="false">
+            <video class="reel-video" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" loop muted playsinline></video>
+            <div class="reel-overlay">
+                <div class="reel-info">
+                    <p class="reel-user">@carpentier_mathis</p>
+                    <p class="reel-caption">Test rendu 3D - projet SolidWorks 🔧</p>
+                    <p class="reel-audio">🎵 Son original - carpentier_mathis</p>
+                </div>
+                <div class="reel-actions">
+                    <button class="reel-btn like-btn" aria-label="J'aime">
+                        <span class="icon">🤍</span>
+                        <span class="count">94</span>
+                    </button>
+                    <button class="reel-btn comment-btn" aria-label="Commenter">
+                        <span class="icon">💬</span>
+                        <span class="count">7</span>
+                    </button>
+                    <button class="reel-btn share-btn" aria-label="Partager">
+                        <span class="icon">↗️</span>
+                        <span class="count">Partager</span>
+                    </button>
+                    <button class="reel-btn mute-btn" aria-label="Son">
+                        <span class="icon">🔇</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="reel" data-liked="false">
+            <video class="reel-video" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" loop muted playsinline></video>
+            <div class="reel-overlay">
+                <div class="reel-info">
+                    <p class="reel-user">@carpentier_mathis</p>
+                    <p class="reel-caption">Soudure MIG/MAG en action 🔥</p>
+                    <p class="reel-audio">🎵 Son original - carpentier_mathis</p>
+                </div>
+                <div class="reel-actions">
+                    <button class="reel-btn like-btn" aria-label="J'aime">
+                        <span class="icon">🤍</span>
+                        <span class="count">311</span>
+                    </button>
+                    <button class="reel-btn comment-btn" aria-label="Commenter">
+                        <span class="icon">💬</span>
+                        <span class="count">23</span>
+                    </button>
+                    <button class="reel-btn share-btn" aria-label="Partager">
+                        <span class="icon">↗️</span>
+                        <span class="count">Partager</span>
+                    </button>
+                    <button class="reel-btn mute-btn" aria-label="Son">
+                        <span class="icon">🔇</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="reel" data-liked="false">
+            <video class="reel-video" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" loop muted playsinline></video>
+            <div class="reel-overlay">
+                <div class="reel-info">
+                    <p class="reel-user">@carpentier_mathis</p>
+                    <p class="reel-caption">Composite de carbone - étape finale 🏁</p>
+                    <p class="reel-audio">🎵 Son original - carpentier_mathis</p>
+                </div>
+                <div class="reel-actions">
+                    <button class="reel-btn like-btn" aria-label="J'aime">
+                        <span class="icon">🤍</span>
+                        <span class="count">57</span>
+                    </button>
+                    <button class="reel-btn comment-btn" aria-label="Commenter">
+                        <span class="icon">💬</span>
+                        <span class="count">4</span>
+                    </button>
+                    <button class="reel-btn share-btn" aria-label="Partager">
+                        <span class="icon">↗️</span>
+                        <span class="count">Partager</span>
+                    </button>
+                    <button class="reel-btn mute-btn" aria-label="Son">
+                        <span class="icon">🔇</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="reels.js"></script>
+
+</body>
+</html>
